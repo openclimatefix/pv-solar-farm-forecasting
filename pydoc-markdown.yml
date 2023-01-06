@@ -1,0 +1,20 @@
+loaders:
+  - type: python
+    search_path: [ukpn/]
+processors:
+  - type: filter
+  - type: smart
+renderer:
+  type: mkdocs
+  pages:
+    - title: Home
+      name: index
+      source: README.md
+    - title: API Documentation
+      children:
+        - title: Data
+          contents: [data]
+  mkdocs_config:
+    site_name: PV solar farm forecasting
+    theme: readthedocs
+    repo_url: https://github.com/openclimatefix/pv-solar-farm-forecasting
