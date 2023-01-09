@@ -1,2 +1,2 @@
 """DataPipes"""
-from ukpn import data
+from ukpn import scripts

@@ -1,4 +1,4 @@
-from ukpn.data import get_metadata
+from ukpn.scripts import get_metadata
 
 
 def test_download_metadata():
