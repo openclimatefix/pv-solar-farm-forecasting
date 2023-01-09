@@ -1,2 +1,2 @@
 """Import Functions"""
-from .download_data import DownloadMetadata
+from .download_data import get_metadata
