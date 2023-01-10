@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 tests/scripts/data
 tests/data
+pv-solar-farm-forecasting.code-workspace
+.vscode
