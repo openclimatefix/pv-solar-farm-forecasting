@@ -29,10 +29,7 @@ def resample_dataframe(
 
     # Converting into datetime format
     df["date_time"] = df["date_time"].apply(parse)
-
-    # Drop Na
-    df.dropna(inplace=True)
-
+    
     # Reset index
     df = df.reset_index(drop=True)
 
