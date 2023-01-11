@@ -2,8 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from ukpn.scripts import resample_dataframe
-from ukpn.scripts import select_random_date
+from ukpn.scripts import resample_dataframe, select_random_date
 
 
 def test_resample_data():
@@ -23,4 +22,8 @@ def test_resample_data():
     # Checking if the dates matches after resampling
     # in both original and resampled df
     random_dates_df = select_random_date(original_df, resampled_df)
-    assert set(random_dates_df[0]["date_time"].dt.date.to_list()) == set(random_dates_df[1]["date_time"].dt.date.to_list())
+    assert set(random_dates_df[0]["date_time"].dt.date.to_list()) == set(
+        random_dates_df[1]["date_time"].dt.date.to_list()
+    )
+
+    print(resampled_df.head(50))
