@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ukpn.scripts import resample_dataframe
+from ukpn.scripts import select_random_date
 
 
 def test_resample_data():
@@ -18,3 +19,8 @@ def test_resample_data():
     # Checking if there are any NaN's
     assert (resampled_df["date_time"] == np.nan).any() == False
     assert (resampled_df["bad_data"] == np.nan).any() == False
+
+    # Checking if the dates matches after resampling
+    # in both original and resampled df
+    random_dates_df = select_random_date(original_df, resampled_df)
+    assert set(random_dates_df[0]["date_time"].dt.date.to_list()) == set(random_dates_df[1]["date_time"].dt.date.to_list())

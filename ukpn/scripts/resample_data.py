@@ -1,6 +1,6 @@
 """Function to resample the irreggular time series data into regular"""
-from typing import Optional
-
+from typing import Optional, Tuple
+import random
 import matplotlib.pyplot as plt
 import pandas as pd
 from dateutil.parser import parse
@@ -49,12 +49,21 @@ def resample_dataframe(
 
     return df
 
+def select_random_date(
+    original_df: pd.DataFrame, 
+    resampled_df=pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame] :
+    df_dates = original_df["date_time"].dt.date.to_list()
+    df_dates = random.choice(df_dates)
+    original_sliced_df = original_df[original_df["date_time"].dt.date == df_dates]
+    resampled_sliced_df = resampled_df[resampled_df["date_time"].dt.date == df_dates]
+    return [original_sliced_df, resampled_sliced_df]
 
 def plot_before_after_resampling(original_df: pd.DataFrame, resampled_df=pd.DataFrame):
     # If you want to plot this, you need to use
     # '#%%' at the first line of the .py file in VScode
     # that will convert the file into a cell and displays
     # a plot
+
     # create timeseries plot
     """This function is soley used to plot the files in VScode
 
@@ -74,3 +83,11 @@ def plot_before_after_resampling(original_df: pd.DataFrame, resampled_df=pd.Data
     plt.ylabel("Bad data")
     plt.title("Time series bad data after resampling")
     plt.show()
+
+
+# path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/test.csv"
+# original_df = resample_dataframe(path_to_file=path_to_file)
+# resampled_df = resample_dataframe(path_to_file=path_to_file, resample=True)
+# sliced_df = select_random_date(original_df, resampled_df)
+# plot_before_after_resampling(sliced_df[0], sliced_df[1])
+
