@@ -25,5 +25,3 @@ def test_resample_data():
     assert set(random_dates_df[0]["date_time"].dt.date.to_list()) == set(
         random_dates_df[1]["date_time"].dt.date.to_list()
     )
-
-    print(resampled_df.head(50))
