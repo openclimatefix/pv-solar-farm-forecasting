@@ -1,54 +1,74 @@
 """Function to resample the irreggular time series data into regular"""
+import os
 import random
-from typing import Optional, Tuple
+from glob import glob
+from typing import Tuple
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
-from dateutil.parser import parse
 
 
-def resample_dataframe(
-    path_to_file: str, intervals: Optional[str] = "5Min", resample: Optional[bool] = False
-) -> pd.DataFrame:
+def load_csv_to_pandas(path_to_file: str) -> pd.DataFrame:
     """This function resamples a time series into regular intervals
 
     Args:
         path_to_file: Enter the absolute path to the csv file
-        intervals: Enter the intervals that you want this data to have
-        resample: Option to resample the dataframe
 
     """
-    # Reading the csv data from the path
-    df = pd.read_csv(path_to_file, header=None, names=["date_time", "bad_data"], sep=",")
+    # Getting the file name
+    file_name = [os.path.basename(x).rsplit(".", 1)[0] for x in glob(path_to_file)]
 
-    # # Convert data values from str into int
-    df["bad_data"] = pd.to_numeric(df["bad_data"], errors="coerce")
+    # Reading the csv data from the path
+    df = pd.read_csv(path_to_file, header=None, names=["date_time", file_name[0]], sep=",")
+
+    # Convert data values from str into int
+    df[file_name[0]] = pd.to_numeric(df[file_name[0]], errors="coerce")
 
     # Interpolate with padding
-    df["bad_data"] = df["bad_data"].interpolate(method="pad", limit=2)
+    df[file_name[0]] = df[file_name[0]].interpolate(method="pad", limit=2)
 
     # Converting into datetime format
-    df["date_time"] = df["date_time"].apply(parse)
-    
+    df["date_time"] = pd.to_datetime(df["date_time"])
+
     # Reset index
     df = df.reset_index(drop=True)
 
-    # If resample is True
-    if resample:
-
-        # Rounding to nearest 5 minutes
-        df["date_time"] = df["date_time"].dt.round("5Min")
-
-        # Grouping the data by similar date_time
-        # df["bad_data"] = df.groupby("date_time").transform("min")
-
-        # Dropping the duplicates
-        df = df.drop_duplicates(subset=["date_time"])
-
-        # Resampling with 5 minute intervals
-        df = df.set_index("date_time").resample(intervals).ffill().reset_index()
-
     return df
+
+
+def interpolation_pandas(
+    original_df: pd.DataFrame, start_date: str, end_date: str, freq: str = "5Min"
+) -> pd.DataFrame:
+    """Interpolating the irregular frequency time series data
+
+    Args:
+        original_df: The data frame after loading csv file
+        start_date: Start date of interpolated time series
+        end_date: End date of interpolated time series
+        freq: Frequency of the time series intended
+    """
+
+    # Set index of original data frame as date_time
+    original_df = original_df.set_index("date_time")
+
+    # Create date range with proper minute frequency that needs to be interpolated
+    interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq)
+
+    # Creating an empty data frame with Nan's of that date range
+    interpolated_data_frame = pd.Series(
+        np.tile(np.nan, len(interpolate_time_series)), index=interpolate_time_series
+    )
+
+    # Interpolate between original irregular intervaled df and reggular created df
+    final_data_frame = pd.concat([original_df, interpolated_data_frame]).sort_index().interpolate()
+    common_df = final_data_frame.index.intersection(interpolated_data_frame.index)
+    final_data_frame = final_data_frame.loc[common_df]
+
+    # Drop the column with all NaN's
+    final_data_frame = final_data_frame.dropna(axis=1, how="all")
+
+    return final_data_frame
 
 
 def select_random_date(
