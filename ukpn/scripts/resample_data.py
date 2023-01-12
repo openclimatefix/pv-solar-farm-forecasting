@@ -34,11 +34,17 @@ def load_csv_to_pandas(path_to_file: str) -> pd.DataFrame:
     # Reset index
     df = df.reset_index(drop=True)
 
+    # Set index of original data frame as date_time
+    df = df.set_index("date_time")
+
     return df
 
 
 def interpolation_pandas(
-    original_df: pd.DataFrame, start_date: str, end_date: str, freq: str = "5Min"
+    original_df: pd.DataFrame,
+    start_date: str = "2017-11-25",
+    end_date: str = "2018-01-13",
+    freq: str = "5Min",
 ) -> pd.DataFrame:
     """Interpolating the irregular frequency time series data
 
@@ -48,9 +54,6 @@ def interpolation_pandas(
         end_date: End date of interpolated time series
         freq: Frequency of the time series intended
     """
-
-    # Set index of original data frame as date_time
-    original_df = original_df.set_index("date_time")
 
     # Create date range with proper minute frequency that needs to be interpolated
     interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq)
@@ -72,22 +75,24 @@ def interpolation_pandas(
 
 
 def select_random_date(
-    original_df: pd.DataFrame, resampled_df: pd.DataFrame
+    original_df: pd.DataFrame, interpolated_df: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Selecting a random date out of the series and slicing the dataframe
 
     Args:
         original_df : Original dataframe before resampling
-        resampled_df : Resampled dataframe after resampling
+        interpolated_df : Resampled dataframe after resampling
     """
-    df_dates = original_df["date_time"].dt.date.to_list()
+    df_dates = original_df.index.values
     df_date = random.choice(df_dates)
-    original_sliced_df = original_df[original_df["date_time"].dt.date == df_date]
-    resampled_sliced_df = resampled_df[resampled_df["date_time"].dt.date == df_date]
-    return [original_sliced_df, resampled_sliced_df]
+    df_date = pd.to_datetime(df_date)
+    df_date = df_date.date()
+    original_sliced_df = original_df.loc[str(df_date)]
+    interpolated_sliced_df = interpolated_df.loc[str(df_date)]
+    return [original_sliced_df, interpolated_sliced_df]
 
 
-def plot_before_after_resampling(original_df: pd.DataFrame, resampled_df=pd.DataFrame):
+def plot_before_after_resampling(original_df: pd.DataFrame, interpolated_df=pd.DataFrame):
     # If you want to plot this, you need to use
     # '#%%' at the first line of the .py file in VScode
     # that will convert the file into a cell and displays
@@ -98,17 +103,17 @@ def plot_before_after_resampling(original_df: pd.DataFrame, resampled_df=pd.Data
 
     Args:
         original_df: Dataframe before resampling
-        resampled_df: Dataframe after resampling
+        interpolated_df: Dataframe after resampling
     """
-    original_df.plot(x="date_time", y="bad_data")
+    original_df.plot(y="test", use_index=True)
     plt.xlabel("Date Range")
     plt.ylabel("Bad data")
-    plt.title("Time series bad data before resampling")
+    plt.title("Time series bad data before interpolation")
     plt.show()
 
     # create timeseries plot
-    resampled_df.plot(x="date_time", y="bad_data")
+    interpolated_df.plot(y="test", use_index=True)
     plt.xlabel("Date Range")
     plt.ylabel("Bad data")
-    plt.title("Time series bad data after resampling")
+    plt.title("Time series bad data after interpolation")
     plt.show()
