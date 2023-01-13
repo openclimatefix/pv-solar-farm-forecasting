@@ -92,7 +92,11 @@ def select_random_date(
     return [original_sliced_df, interpolated_sliced_df]
 
 
-def plot_before_after_resampling(original_df: pd.DataFrame, interpolated_df=pd.DataFrame):
+def plot_before_after_interpolating(
+    original_df: pd.DataFrame, 
+    interpolated_df: pd.DataFrame,
+    regular_plot: bool = False,
+    cumsum_plot: bool = False):
     # If you want to plot this, you need to use
     # '#%%' at the first line of the .py file in VScode
     # that will convert the file into a cell and displays
@@ -105,15 +109,33 @@ def plot_before_after_resampling(original_df: pd.DataFrame, interpolated_df=pd.D
         original_df: Dataframe before resampling
         interpolated_df: Dataframe after resampling
     """
-    original_df.plot(y="test", use_index=True)
-    plt.xlabel("Date Range")
-    plt.ylabel("Bad data")
-    plt.title("Time series bad data before interpolation")
-    plt.show()
+    if regular_plot:
+        original_df.plot(y="test", use_index=True)
+        plt.xlabel("Date Range")
+        plt.ylabel("Bad data")
+        plt.title("Time series bad data before interpolation")
+        plt.show()
 
-    # create timeseries plot
-    interpolated_df.plot(y="test", use_index=True)
-    plt.xlabel("Date Range")
-    plt.ylabel("Bad data")
-    plt.title("Time series bad data after interpolation")
-    plt.show()
+        # create timeseries plot
+        interpolated_df.plot(y="test", use_index=True)
+        plt.xlabel("Date Range")
+        plt.ylabel("Bad data")
+        plt.title("Time series bad data after interpolation")
+        plt.show()
+    
+    if cumsum_plot:
+        df = original_df.cumsum()
+        df.plot(y="test", use_index=True)
+        plt.title("Cummulative plot over a single day before interpolation")
+        plt.show()
+
+        df = interpolated_df.cumsum()
+        df.plot(y="test", use_index=True)
+        plt.title("Cummulative plot over a single day after interpolation")
+        plt.show()        
+
+# csv_path = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/test.csv"
+# original_df = load_csv_to_pandas(path_to_file=csv_path)
+# interpolated_df = interpolation_pandas(original_df=original_df)
+# both_df = select_random_date(original_df,interpolated_df)
+# plot_before_after_interpolating(both_df[0], both_df[1], cumsum_plot=True)

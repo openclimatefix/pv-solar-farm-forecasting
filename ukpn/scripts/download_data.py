@@ -35,3 +35,20 @@ def get_metadata(api_url: str, print_data: bool = False):
 
     if print_data:
         pprint(data_first_record)
+
+def meta_data():
+    base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?"
+    seperator = "&"
+    questionare = "q="
+    facet_questionare = "facet="
+    facets = [
+        "grid_supply_point",
+        "licence_area",
+        "energy_conversion_technology_1",
+        "flexible_connection_yes_no",
+        "connection_status",
+        "primary_resource_type_group"]
+    facet_str = [facet_questionare+x for x in facets]
+    facet_str = seperator.join(facet_str)
+    facet_str = [questionare+facet_str]
+    print(facet_str)
