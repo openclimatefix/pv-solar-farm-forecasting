@@ -93,10 +93,11 @@ def select_random_date(
 
 
 def plot_before_after_interpolating(
-    original_df: pd.DataFrame, 
+    original_df: pd.DataFrame,
     interpolated_df: pd.DataFrame,
     regular_plot: bool = False,
-    cumsum_plot: bool = False):
+    cumsum_plot: bool = False,
+):
     # If you want to plot this, you need to use
     # '#%%' at the first line of the .py file in VScode
     # that will convert the file into a cell and displays
@@ -108,6 +109,8 @@ def plot_before_after_interpolating(
     Args:
         original_df: Dataframe before resampling
         interpolated_df: Dataframe after resampling
+        regular_plot: Plotting without any operations
+        cumsum_plot: Plotting with Cummulative sum over time
     """
     if regular_plot:
         original_df.plot(y="test", use_index=True)
@@ -122,7 +125,7 @@ def plot_before_after_interpolating(
         plt.ylabel("Bad data")
         plt.title("Time series bad data after interpolation")
         plt.show()
-    
+
     if cumsum_plot:
         df = original_df.cumsum()
         df.plot(y="test", use_index=True)
@@ -132,7 +135,8 @@ def plot_before_after_interpolating(
         df = interpolated_df.cumsum()
         df.plot(y="test", use_index=True)
         plt.title("Cummulative plot over a single day after interpolation")
-        plt.show()        
+        plt.show()
+
 
 # csv_path = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/test.csv"
 # original_df = load_csv_to_pandas(path_to_file=csv_path)

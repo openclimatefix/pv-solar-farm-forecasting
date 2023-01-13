@@ -1,5 +1,5 @@
 """Import Functions"""
-from .download_data import get_metadata
+from .download_data import construct_url, get_metadata
 from .resample_data import (
     interpolation_pandas,
     load_csv_to_pandas,
