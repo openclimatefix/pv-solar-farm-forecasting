@@ -127,7 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+tests/scripts/data
+tests/data
 pv-solar-farm-forecasting.code-workspace
-tests/data/009967.csv
-.vscode/extensions.json
-tests/data/test.csv
+.vscode
+.gitattributes
