@@ -1,20 +1,33 @@
 """This class is ued to retrieve data through API calls"""
 import json
 import logging
+import os
+from pathlib import Path
 from pprint import pprint
+from typing import Optional, Union
 
+import numpy as np
+import pandas as pd
 import requests
+from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
 
-def get_metadata(api_url: str, print_data: bool = False):
+def get_metadata_from_ukpn_api(
+    api_url: str,
+    eastings: Optional[str] = None,
+    northings: Optional[str] = None,
+    print_data: bool = False,
+):
     """
     This function retrievs metadata through api calls
 
     Args:
         api_url: The api url link that emiits json format data
         print_data: Optional to choose printing the data
+        eastings: eastings value of the pv solar farm
+        northings: Northings value of the pv solar farm
     """
 
     response_api = requests.get(api_url)
@@ -31,10 +44,75 @@ def get_metadata(api_url: str, print_data: bool = False):
 
     # Parse the data into json format
     data_json = json.loads(raw_data)
-    data_first_record = data_json["records"][0]
+
+    # Getting all the records
+    data_records = data_json["records"]
+    first_record = data_json["records"][0]
 
     if print_data:
-        pprint(data_first_record)
+        pprint(first_record)
+
+    pv_site_dict_index = []
+    # From the list of dictionaries
+    for i in range(len(data_records)):
+        if isinstance(data_records[i], dict):
+            fields = data_records[i]["fields"]
+            if isinstance(fields, dict):
+                if (
+                    fields["location_x_coordinate_eastings_where_data_is_held"] == eastings
+                    and fields["location_y_coordinate_northings_where_data_is_held"] == northings
+                ) is True:
+                    pv_site_dict_index.append(i)
+
+    # CHecking if there are any sites matching the coordinates
+    if len(pv_site_dict_index) == 0:
+        logger.info(f"There are no PV sites matching with {eastings}")
+        return None
+    else:
+        # Getting the required data from Eastings and Northings
+        data_json = data_records[pv_site_dict_index[0]]
+
+        return data_json
+
+
+def get_metadata_from_ukpn_xlsx(
+    link_of_ecr_excel: str,
+    local_path: Path[Union, str],
+    eastings: Optional[str] = None,
+    northings: Optional[str] = None,
+):
+    """Download and load the ECR file from the link provided below
+
+    For direct download, opne this link-
+    https://media.umbraco.io/uk-power-networks/0dqjxaho/embedded-capacity-register.xlsx
+
+    Args:
+        link_of_ecr_excel: Link shown above
+        local_path: The folder where the file needs to get downloaded
+        eastings: eastings value of the pv solar farm
+        northings: Northings value of the pv solar farm
+    """
+    # Download and store the excel sheet in a location
+    resp = requests.get(link_of_ecr_excel)
+    local_path = os.path.join(local_path, "ecr.xlsx")
+    with open(local_path, "wb") as output:
+        output.write(resp.content)
+
+    # Read the excel sheet
+    wb = load_workbook(local_path, read_only=True, keep_links=False)
+
+    # The sheet need and its name according to UKPN is "Register Part 1"
+    file_name = "Register Part 1"
+    for text in wb.sheetnames:
+        if file_name in text:
+            df = pd.read_excel(local_path, sheet_name=text, skiprows=1)
+
+    # Filtering the data based on the eastings and northings provided
+    for text in df.columns:
+        if "Eastings" in text:
+            df = df[df[text] == np.float64(eastings)].reset_index()
+
+    return df
 
 
 def construct_url(

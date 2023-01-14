@@ -1,9 +1,7 @@
-from ukpn.scripts import construct_url, get_metadata
+from pathlib import Path
+from pprint import pprint
 
-
-def test_download_metadata():
-    cantubry_api_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset=embedded-capacity-register&q=&facet=grid_supply_point&facet=licence_area&facet=energy_conversion_technology_1&facet=flexible_connection_yes_no&facet=connection_status&facet=primary_resource_type_group&refine.grid_supply_point=CANTERBURY+NORTH&refine.energy_conversion_technology_1=Photovoltaic"
-    download = get_metadata(api_url=cantubry_api_url, print_data=True)
+from ukpn.scripts import construct_url, get_metadata_from_ukpn_api, get_metadata_from_ukpn_xlsx
 
 
 def test_construct_url():
@@ -19,4 +17,12 @@ def test_construct_url():
         refiners=["grid_supply_point", "energy_conversion_technology_1"],
         refine_values=["CANTERBURY+NORTH", "Photovoltaic"],
     )
-    search_url = get_metadata(api_url=url, print_data=True)
+    data = get_metadata_from_ukpn_api(api_url=url, eastings="615378", northings="165525")
+
+
+def test_metadata_from_xlsx():
+    url = "https://media.umbraco.io/uk-power-networks/0dqjxaho/embedded-capacity-register.xlsx"
+    local_path = Path(r"/home/raj/ocf/pv-solar-farm-forecasting/tests/data")
+    df = get_metadata_from_ukpn_xlsx(
+        link_of_ecr_excel=url, local_path=local_path, eastings="615378", northings="165525"
+    )
