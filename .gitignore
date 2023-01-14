@@ -132,3 +132,4 @@ tests/data
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
+conftest.py
