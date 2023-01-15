@@ -1,7 +1,12 @@
 from pathlib import Path
 from pprint import pprint
 
-from ukpn.scripts import construct_url, get_metadata_from_ukpn_api, get_metadata_from_ukpn_xlsx
+from ukpn.scripts import (
+    construct_url,
+    get_metadata_from_ukpn_api,
+    get_metadata_from_ukpn_xlsx,
+    metadata_df_to_netcdf,
+)
 
 
 def test_construct_url():
@@ -22,7 +27,9 @@ def test_construct_url():
 
 def test_metadata_from_xlsx():
     url = "https://media.umbraco.io/uk-power-networks/0dqjxaho/embedded-capacity-register.xlsx"
+    test_path = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/test.csv"
     local_path = Path(r"/home/raj/ocf/pv-solar-farm-forecasting/tests/data")
     df = get_metadata_from_ukpn_xlsx(
         link_of_ecr_excel=url, local_path=local_path, eastings="615378", northings="165525"
     )
+    ncxr = metadata_df_to_netcdf(path_to_ukpn_timeseries=test_path)
