@@ -20,13 +20,16 @@ def load_csv_to_pandas(path_to_file: str) -> pd.DataFrame:
     file_name = [os.path.basename(x).rsplit(".", 1)[0] for x in glob(path_to_file)]
 
     # Reading the csv data from the path
-    df = pd.read_csv(path_to_file, header=None, names=["date_time", file_name[0]], sep=",")
+    df = pd.read_csv(path_to_file, names=["date_time", file_name[0]], sep=",", skiprows=1)
 
-    # Convert data values from str into int
-    df[file_name[0]] = pd.to_numeric(df[file_name[0]], errors="coerce")
+    if isinstance(df[df.columns[1]][0], str):
+        # Convert data values from str into int
+        df[file_name[0]] = pd.to_numeric(df[file_name[0]], errors="coerce")
 
-    # Interpolate with padding
-    df[file_name[0]] = df[file_name[0]].interpolate(method="pad", limit=2)
+        # Interpolate with padding
+        df[file_name[0]] = df[file_name[0]].interpolate(method="pad", limit=2)        
+    else:
+        pass
 
     # Converting into datetime format
     df["date_time"] = pd.to_datetime(df["date_time"])
