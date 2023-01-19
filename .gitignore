@@ -139,8 +139,4 @@ environment.yml
 pydoc-markdown.yml
 README.md
 requirements.txt
-pv-solar-farm-forecasting/ukpn/scripts/resample_data.py
-ukpn/scripts/resample_data.py
-ukpn/scripts/download_data.py
-tests/scripts/test_download_data.py
 .github/workflows/linters.yaml
