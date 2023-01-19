@@ -11,8 +11,10 @@ from ukpn.scripts import interpolation_pandas, load_csv_to_pandas, select_random
 
 def test_check_negative_value():
     path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_dashboard_data/canterbury_north.csv"
-    original_df = load_csv_to_pandas(path_to_file=path_to_file)
-    neg_df = check_for_negative_data(original_df=original_df)
+    original_df = load_csv_to_pandas(path_to_file = path_to_file)
+    canterbury_negative_index = check_for_negative_data(original_df = original_df)
+    unique_dates = canterbury_negative_index.map(lambda t: t.date()).unique()
+    print(unique_dates)
 
 
 # def test_resample_data():
@@ -33,7 +35,7 @@ def test_check_negative_value():
 #     assert (interpolated_df[file_name[0]] == np.nan).any() == False
 
 # def test_ukpn_dashboard_data():
-#     path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_dashboard_data/generator_output.csv"
+#     path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_dashboard_data/canterbury_north.csv"
 #     original_df = load_csv_to_pandas(path_to_file)
 #     original_df["minutes"] = original_df.index.values
 

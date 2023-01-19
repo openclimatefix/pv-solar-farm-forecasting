@@ -76,26 +76,39 @@ def count_total_gsp_solar(
         return gsp_count_dict
 
 def check_for_negative_data(
-    original_df: pd.DataFrame
+    original_df: pd.DataFrame,
+    replace_with_nan: bool = False
     ):
     """This function helps in indentifying if there are any neagtive values
 
     Args:
         original_df: Loaded dataframe from the csv file
+        replace_with_nan: If truem it replaces negative values with NaN's
     """
     # Check for the negative values
-    check_non_negative = (original_df < 0).apply(lambda x: any(x))
+    check_non_negative = (original_df < 0).any()
     if not check_non_negative[0]:
-        logger.info(f" The CSV file does not contain the negative values {check_for_negative_data}")
+        logger.info(f"The CSV file does contain the negative values {check_for_negative_data}")
     else:
-        negative_indices = original_df.index[original_df < 0]
-        print(negative_indices)
+        # Filtering the dataframe which has negative values
+        negative_df = original_df.iloc[np.where(original_df[original_df.columns[0]].values < 0.)]
+        print(negative_df)       
+        if not replace_with_nan:
+            # Returns index values where there are negative numbers
+            return negative_df.index
+        else:     
+            # Replacing negative values with NaN's
+            original_df.loc[negative_df.index] = np.nan
+            # Returns original dataframe with negative values replaced with NaN's
+            return original_df
+      
 
 def interpolation_pandas(
     original_df: pd.DataFrame,
     start_date: str = "2017-11-25",
     end_date: str = "2018-01-13",
     freq: str = "5Min",
+    drop_last_row: bool = False
 ) -> pd.DataFrame:
     """Interpolating the irregular frequency time series data
 
@@ -113,6 +126,9 @@ def interpolation_pandas(
     interpolated_data_frame = pd.Series(
         np.tile(np.nan, len(interpolate_time_series)), index=interpolate_time_series
     )
+
+    if drop_last_row:
+        interpolated_data_frame.drop(interpolated_data_frame.tail(1).index,inplace=True)
 
     # Interpolate between original irregular intervaled df and reggular created df
     final_data_frame = pd.concat([original_df, interpolated_data_frame]).sort_index().interpolate()
@@ -187,10 +203,3 @@ def plot_before_after_interpolating(
         df.plot(y="test", use_index=True)
         plt.title("Cummulative plot over a single day after interpolation")
         plt.show()
-
-
-# csv_path = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/test.csv"
-# original_df = load_csv_to_pandas(path_to_file=csv_path)
-# interpolated_df = interpolation_pandas(original_df=original_df)
-# both_df = select_random_date(original_df,interpolated_df)
-# plot_before_after_interpolating(both_df[0], both_df[1], cumsum_plot=True)
