@@ -1,28 +1,33 @@
-"""Function to resample the irreggular time series data into regular"""
+"""Function needed to load the data into the IterDatapipe"""
 import os
-import random
+from pathlib import Path
 from glob import glob
-from typing import Tuple
+from typing import Union, Dict 
 import logging
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas import DatetimeIndex
 
 logger = logging.getLogger(__name__)
 
-def load_csv_to_pandas(path_to_file: str) -> pd.DataFrame:
+def load_csv_to_pandas(
+    path_to_file: Path[Union, str],
+    datetime_index_name: str = "time_utc") -> pd.DataFrame:
     """This function resamples a time series into regular intervals
 
     Args:
         path_to_file: Enter the absolute path to the csv file
 
     """
+    # Path file converted to posix() for a Windows folder path
+    path_to_file = path_to_file.as_posix()
+
     # Getting the file name
     file_name = [os.path.basename(x).rsplit(".", 1)[0] for x in glob(path_to_file)]
 
     # Reading the csv data from the path
-    df = pd.read_csv(path_to_file, names=["date_time", file_name[0]], sep=",", skiprows=1)
+    df = pd.read_csv(path_to_file, names=[datetime_index_name, file_name[0]], sep=",", skiprows=1)
 
     if isinstance(df[df.columns[1]][0], str):
         # Convert data values from str into int
@@ -34,21 +39,21 @@ def load_csv_to_pandas(path_to_file: str) -> pd.DataFrame:
         pass
 
     # Converting into datetime format
-    df["date_time"] = pd.to_datetime(df["date_time"])
+    df[datetime_index_name] = pd.to_datetime(df[datetime_index_name])
 
     # Reset index
     df = df.reset_index(drop=True)
 
     # Set index of original data frame as date_time
-    df = df.set_index("date_time")
+    df = df.set_index(datetime_index_name)
 
     return df
 
-def count_total_gsp_solar(
+def get_gsp_data_in_dict(
     folder_destination: str,
     required_file_format: str = "*.csv",
-    get_gsp_dataframe_dict: bool = False
-    ):
+    count_gsp_data: bool = False
+    ) -> Union[pd.DataFrame, Dict]:
     """This function counts the total number of GSP solar data 
 
     Args:
@@ -67,23 +72,27 @@ def count_total_gsp_solar(
         file_name = os.path.basename(file_path)
         pandas_df = load_csv_to_pandas(path_to_file = file_path)
         pandas_df_shape = pandas_df.shape[0]
+
+        # Getiing the count of all the solar data from the GSP's
         gsp_count_dict[file_name] = pandas_df_shape
+
+        # Getting the pandas dataframes of corresponding GSP's
         gsp_dataframe_dict[file_name] = pandas_df
 
-    if get_gsp_dataframe_dict:
-        return gsp_dataframe_dict
-    else:
+    if count_gsp_data:
         return gsp_count_dict
+    else:
+        return gsp_dataframe_dict
 
 def check_for_negative_data(
     original_df: pd.DataFrame,
     replace_with_nan: bool = False
-    ):
+    )-> Union[DatetimeIndex, pd.DataFrame]:
     """This function helps in indentifying if there are any neagtive values
 
     Args:
         original_df: Loaded dataframe from the csv file
-        replace_with_nan: If truem it replaces negative values with NaN's
+        replace_with_nan: If true it replaces negative values with NaN's
     """
     # Check for the negative values
     check_non_negative = (original_df < 0).any()
@@ -100,7 +109,6 @@ def check_for_negative_data(
             original_df.loc[negative_df.index] = np.nan
             # Returns original dataframe with negative values replaced with NaN's
             return original_df
-      
 
 def interpolation_pandas(
     original_df: pd.DataFrame,
@@ -138,21 +146,3 @@ def interpolation_pandas(
     final_data_frame = final_data_frame.dropna(axis=1, how="all")
 
     return final_data_frame
-
-
-def select_random_date(
-    original_df: pd.DataFrame, interpolated_df: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Selecting a random date out of the series and slicing the dataframe
-
-    Args:
-        original_df : Original dataframe before resampling
-        interpolated_df : Resampled dataframe after resampling
-    """
-    df_dates = original_df.index.values
-    df_date = random.choice(df_dates)
-    df_date = pd.to_datetime(df_date)
-    df_date = df_date.date()
-    original_sliced_df = original_df.loc[str(df_date)]
-    interpolated_sliced_df = interpolated_df.loc[str(df_date)]
-    return [original_sliced_df, interpolated_sliced_df]
