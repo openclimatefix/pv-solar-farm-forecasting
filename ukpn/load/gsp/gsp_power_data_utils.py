@@ -4,6 +4,7 @@ from pathlib import Path
 from glob import glob
 from typing import Union, Dict 
 import logging
+import pprint
 
 import numpy as np
 import pandas as pd
@@ -69,8 +70,9 @@ def get_gsp_data_in_dict(
 
     # Getting the count of all the dataframes
     for file_path in file_paths:
-        file_name = os.path.basename(file_path)
-        pandas_df = load_csv_to_pandas(path_to_file = file_path)
+        base_name = os.path.basename(file_path)
+        file_name = os.path.splitext(base_name)[0]
+        pandas_df = load_csv_to_pandas(path_to_file = Path(file_path))
         pandas_df_shape = pandas_df.shape[0]
 
         # Getiing the count of all the solar data from the GSP's
@@ -84,11 +86,50 @@ def get_gsp_data_in_dict(
     else:
         return gsp_dataframe_dict
 
+def drop_duplicates_and_fill_missing_time_intervals(
+    dataframe_dict: Dict,    
+    freq: str = "10Min",
+    get_complete_dataframe: bool = False
+    ):
+    """This function checks the frequency of the time series
+    and fills in time series data if there is any missing intervals
+
+    Args:
+        dataframe_dict: Loaded dataframe from the csv file
+        freq: Frequency of those dataframe DateTime indices
+    """
+    # Declaring complete dataframe and a dictionary
+    gsp_dataframe_dict = {}
+    gsp_complete_dataframe = pd.DataFrame()
+    # Check for every data frame
+    for gsp_name, original_df in dataframe_dict.items():
+
+        # Check the frequency of the time series
+        check_freq = pd.infer_freq(original_df.index)
+        logger.info(f"The frequency of {original_df.columns} is {check_freq}")
+
+        # Drop duplicates
+        original_df = original_df[~original_df.index.duplicated(keep = 'last')]
+
+        # Filling in the missing time intervals 
+        new_data_frame = original_df.asfreq(freq)
+
+        if get_complete_dataframe:
+            # Appending the dictionary
+            gsp_complete_dataframe = pd.concat([gsp_complete_dataframe, new_data_frame], axis = 1, join = "outer")
+        else:
+            gsp_dataframe_dict[gsp_name] = new_data_frame
+
+    if get_complete_dataframe:
+        return gsp_complete_dataframe
+    else:
+        return gsp_dataframe_dict
+
 def check_for_negative_data(
     original_df: pd.DataFrame,
     replace_with_nan: bool = False
     )-> Union[DatetimeIndex, pd.DataFrame]:
-    """This function helps in indentifying if there are any neagtive values
+    """This function helps in identifying if there are any neagtive values
 
     Args:
         original_df: Loaded dataframe from the csv file
@@ -96,11 +137,14 @@ def check_for_negative_data(
     """
     # Check for the negative values
     check_non_negative = (original_df < 0).any()
+
     if not check_non_negative[0]:
         logger.info(f"The CSV file does contain the negative values {check_for_negative_data}")
+        return original_df
     else:
         # Filtering the dataframe which has negative values
-        negative_df = original_df.iloc[np.where(original_df[original_df.columns[0]].values < 0.)]      
+        negative_df = original_df.iloc[np.where(original_df[original_df.columns[0]].values < 0.)]
+
         if not replace_with_nan:
             # Returns index values where there are negative numbers
             return negative_df.index
