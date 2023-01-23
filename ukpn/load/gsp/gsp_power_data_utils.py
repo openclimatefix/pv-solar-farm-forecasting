@@ -4,8 +4,8 @@ from pathlib import Path
 from glob import glob
 from typing import Union, Dict 
 import logging
-import pprint
 
+import xarray as xr
 import numpy as np
 import pandas as pd
 from pandas import DatetimeIndex
@@ -190,3 +190,29 @@ def interpolation_pandas(
     final_data_frame = final_data_frame.dropna(axis=1, how="all")
 
     return final_data_frame
+
+def convert_xarray_to_netcdf(
+    xarray_dataarray: xr.Dataset,
+    folder_to_save: str,
+    file_name: str = "canterbury_north.nc"
+    ):
+    """This function saves the xarray dataarray in netcdf file
+    
+    Args:
+    xarray_dataarray: The dataarray that needs to be saved
+        folder_to_save: Path of the destination folder
+        file_name: Name of the file to be saved
+    """
+
+    # Define the path
+    file_path = os.path.join(folder_to_save, file_name)
+
+    # Check if the file exists
+    check_file = os.path.isfile(file_path)    
+
+    if not check_file:
+        # Saving the xarray
+        xarray_dataarray.to_netcdf(path = file_path)
+
+        # Close the data array
+        xarray_dataarray.close()

@@ -82,29 +82,3 @@ def get_gsp_into_xarray(
         attrs = dict(description = "Metered power generation (MW) of GSP's")
     )
     return ds
-
-def convert_xarray_to_netcdf(
-    xarray_dataarray: xr.DataArray,
-    folder_to_save: str,
-    file_name: str = "canterbury_north.nc"
-    ):
-    """This function saves the xarray dataarray in netcdf file
-    
-    Args:
-    xarray_dataarray: The dataarray that needs to be saved
-        folder_to_save: Path of the destination folder
-        file_name: Name of the file to be saved
-    """
-
-    # Define the path
-    file_path = os.path.join(folder_to_save, file_name)
-
-    # Check if the file exists
-    check_file = os.path.isfile(file_path)    
-
-    if not check_file:
-        # Saving the xarray
-        xarray_dataarray.to_netcdf(path = file_path)
-
-        # Close the data array
-        xarray_dataarray.close()
