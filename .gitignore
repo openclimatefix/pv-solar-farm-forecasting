@@ -140,3 +140,4 @@ pydoc-markdown.yml
 README.md
 requirements.txt
 .github/workflows/linters.yaml
+*.html

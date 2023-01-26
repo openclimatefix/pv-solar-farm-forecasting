@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ukpn.load.gsp.gsp_power_data_utils import *
-from ukpn.load.gsp.gsp_meta_data_utils import *
+from ukpn.load.gsp.power_data.gsp_power_data_utils import *
+from ukpn.load.gsp.meta_data.gsp_meta_data_utils import *
 
 logger = logging.getLogger(__name__)
 

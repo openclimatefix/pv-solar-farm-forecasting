@@ -162,7 +162,7 @@ def check_for_negative_data(
     original_df: pd.DataFrame,
     replace_with_nan: bool = False
     )-> Union[DatetimeIndex, pd.DataFrame]:
-    """This function helps in identifying if there are any neagtive values
+    """This function helps in identifying if there are any negative values
 
     Args:
         original_df: Loaded dataframe from the csv file
@@ -204,7 +204,7 @@ def interpolation_pandas(
     """
 
     # Create date range with proper minute frequency that needs to be interpolated
-    interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq)
+    interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq, utc = True)
 
     # Creating an empty data frame with Nan's of that date range
     interpolated_data_frame = pd.Series(
