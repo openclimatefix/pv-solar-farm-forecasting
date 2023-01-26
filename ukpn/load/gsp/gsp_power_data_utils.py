@@ -8,13 +8,16 @@ import logging
 import xarray as xr
 import numpy as np
 import pandas as pd
+import pytz
+import calendar
 from pandas import DatetimeIndex
 
 logger = logging.getLogger(__name__)
 
 def load_csv_to_pandas(
     path_to_file: Path[Union, str],
-    datetime_index_name: str = "time_utc") -> pd.DataFrame:
+    datetime_index_name: str = "time_utc",
+    time_zone: str = "Europe/London") -> pd.DataFrame:
     """This function resamples a time series into regular intervals
 
     Args:
@@ -40,7 +43,7 @@ def load_csv_to_pandas(
         pass
 
     # Converting into datetime format
-    df[datetime_index_name] = pd.to_datetime(df[datetime_index_name])
+    df[datetime_index_name] = pd.to_datetime(df[datetime_index_name], utc = True)
 
     # Reset index
     df = df.reset_index(drop=True)
@@ -49,6 +52,36 @@ def load_csv_to_pandas(
     df = df.set_index(datetime_index_name)
 
     return df
+
+def check_duplicates(
+    original_df: pd.DataFrame,  
+    ):
+    """Function to check duplicates in any other month than October
+
+    Info:
+        Daylight savings creates missing intervals in March and duplicated
+        intervals in October. 
+    
+    Args:
+        original_df: The dataframe loaded from csv file
+    """
+    
+    # Getting all the duplicates
+    duplicates_df = original_df[original_df.index.duplicated(keep = 'first')]
+    duplicates_df['year'] = pd.to_datetime(duplicates_df.index).year.values
+
+    # Grouping dataframe by the year
+    year_group = duplicates_df.groupby('year')
+    # Duplicate dictionary
+    duplicate_gsp_year_dict = {}
+    for year_num, group in year_group:
+        # Checking the duplicates are indeed in October considering daylight savings
+        check_month = pd.to_datetime(group.index).month.values
+        if not (len(np.unique(check_month)) == 1 and calendar.month_abbr[np.unique(check_month)[0]] == 'Oct'):
+            logger.info(f"For the GSP {group.columns[0]}, Year {year_num} has duplicates other than October")
+            duplicate_gsp_year_dict[group.columns[0]] = year_num
+
+    return duplicate_gsp_year_dict
 
 def get_gsp_data_in_dict(
     folder_destination: str,
