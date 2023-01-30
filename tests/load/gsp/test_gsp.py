@@ -72,4 +72,9 @@ def test_check_non_negative_valus():
 def test_compare_gsp_pvlib():
     path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/gcp_gsp_zarr/pv_gsp.zarr"
     gsp_data_pvlib = xr.open_zarr(path_to_file)
-    print(gsp_data_pvlib)
+    pvlive_dates = pd.to_datetime(gsp_data_pvlib.datetime_gmt.values)
+    
+
+    path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_netcdf/ukpn_gsp.nc"
+    gsp_data_ukpn = xr.open_dataset(path_to_file, engine = "h5netcdf")
+    
