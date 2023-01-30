@@ -10,7 +10,13 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from ukpn.load import *
+from ukpn.load.gsp import (
+    get_gsp_data_in_dict,
+    check_for_negative_data,
+    bst_to_utc,
+    drop_duplicates_and_fill_missing_time_intervals,
+    interpolation_pandas,
+    convert_xarray_to_netcdf)
 
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
@@ -26,8 +32,11 @@ class OpenGSPDataIterDataPipe(IterDataPipe):
     def __init__(
         self,
         folder_destination: Path[Union, str],
+        freq: str = "10Min",
         folder_to_save: Optional[str] = None,
-        file_name: Optional[str] = None,      
+        file_name: Optional[str] = None,
+        interpolation: Optional[bool] = False,
+        drop_duplicates: Optional[bool] = False,      
         write_as_netcdf: bool = False):
         """This function reads the csv data into a dataframe
 
@@ -37,8 +46,11 @@ class OpenGSPDataIterDataPipe(IterDataPipe):
         """
 
         self.folder_destination = folder_destination
+        self.freq = freq
         self.folder_to_save = folder_to_save
         self.file_name = file_name
+        self.interpolation = interpolation
+        self.drop_duplicates = drop_duplicates
         self.write_as_netcdf = write_as_netcdf
 
     def __iter__(self) -> xr.DataArray:
@@ -49,8 +61,8 @@ class OpenGSPDataIterDataPipe(IterDataPipe):
         # Loading every csv file from the path into a dataframe
         gsp_data_in_dict = get_gsp_data_in_dict(folder_destination = folder_destination)
         
-        # After interpolation dictionary
-        gsp_interpolated_dict = {}
+        # Declaring final dataframe
+        gsp_dataframe = pd.DataFrame()
 
         # Pre-processing every data frame
         for gsp_name, data_frame in gsp_data_in_dict.items():
@@ -59,35 +71,31 @@ class OpenGSPDataIterDataPipe(IterDataPipe):
             non_negative_df = check_for_negative_data(
                 original_df = data_frame,
                 replace_with_nan = True)
+            
+            # Converting to UTC
+            non_negative_df = bst_to_utc(original_df = non_negative_df)
 
-            # Interpolating the missing values
-            start_date = non_negative_df.first_valid_index().strftime("%Y-%m-%d")
-            end_date = non_negative_df.last_valid_index().strftime("%Y-%m-%d")
-            interpolated_df = interpolation_pandas(
-                original_df = non_negative_df, 
-                start_date = start_date,
-                end_date = end_date,
-                freq = "10Min",
-                drop_last_row = True)
-    
-            # Dropping the duplicates
-            interpolated_df = interpolated_df[~interpolated_df.index.duplicated(keep = 'first')]
+            # Check duplicates
+            check = non_negative_df.index.duplicated().any()
+            if check:
+                # Drop duplicates
+                non_negative_df = non_negative_df[~non_negative_df.index.duplicated(keep = 'last')] 
+            
+            # Filling missing intervals
+            non_negative_df = non_negative_df.asfreq(self.freq)
+            
+            # Getting each df into a single big dataframe
+            gsp_dataframe = pd.concat([gsp_dataframe, non_negative_df], axis = 1, join = "outer")
 
-            # Writing new dictionary with interpolating
-            gsp_interpolated_dict[gsp_name] = interpolated_df
-
-        # Complete gsp dataframe after interpolation
-        gsp_dataframe_after_dropping = drop_duplicates_and_fill_missing_time_intervals(
-            dataframe_dict = gsp_interpolated_dict,
-            get_complete_dataframe = True)
+            print(f"\nPre-processing for {gsp_name} has completed")
         
         # Metered power values into an array
-        gsp_metered_power_values = gsp_dataframe_after_dropping.to_numpy()
+        gsp_metered_power_values = gsp_dataframe.to_numpy()
         # GSP names
-        gsp_names = gsp_dataframe_after_dropping.columns
+        gsp_names = gsp_dataframe.columns
         # Datetime values
-        gsp_datetimes = gsp_dataframe_after_dropping.index
-        
+        gsp_datetimes = gsp_dataframe.index.values
+
         # Creating an xarray dataset
         final_dataset = xr.Dataset(
             data_vars = dict(
@@ -106,4 +114,4 @@ class OpenGSPDataIterDataPipe(IterDataPipe):
                 file_name = self.file_name
             )
 
-        return iter(final_dataset)
+        return final_dataset

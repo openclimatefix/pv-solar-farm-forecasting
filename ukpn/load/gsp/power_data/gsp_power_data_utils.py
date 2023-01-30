@@ -273,7 +273,9 @@ def convert_xarray_to_netcdf(
 
     if not check_file:
         # Saving the xarray
-        xarray_dataarray.to_netcdf(path = file_path)
+        xarray_dataarray.to_netcdf(
+            path = file_path,
+            engine = "h5netcdf")
 
         # Close the data array
         xarray_dataarray.close()
