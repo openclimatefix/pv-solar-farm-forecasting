@@ -132,3 +132,12 @@ tests/data
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
+conftest.py
+.flake8
+.pre-commit-config.yaml
+environment.yml
+pydoc-markdown.yml
+README.md
+requirements.txt
+.github/workflows/linters.yaml
+*.html
