@@ -1,10 +1,12 @@
 import numpy as np
+import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
-from ukpn.load import OpenGSPData
-from ukpn.load.gsp.gsp_netcdf import get_gsp_into_xarray, convert_xarray_to_netcdf
-from ukpn.load.gsp.power_data.gsp_power_data_utils import *
-from ukpn.load import OpenGSPData
+import xarray as xr
+
+from ukpn.load.gsp import (
+    get_gsp_data_in_dict,
+    drop_duplicates_and_fill_missing_time_intervals)
 
 def test_check_frequency():
     """Testing if all the gsp has the same number of datetime values"""
@@ -19,6 +21,12 @@ def test_check_frequency():
     )
     assert final_df.index.freq == pd.tseries.offsets.Minute(n = 10)
 
+def test_compare_gsp_pvlib():
+    path_to_file = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/gcp_gsp_zarr/pv_gsp.zarr"
+    gsp_data_pvlib = xr.open_zarr(path_to_file)
+    print(list(gsp_data_pvlib.coords))
+
+    
 # def test_check_non_negative_valus():
 #     """Testing if any gsp's has negative values"""
 #     # Declaring the destination folder of all the files

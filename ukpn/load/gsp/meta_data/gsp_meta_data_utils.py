@@ -12,8 +12,6 @@ import requests
 import xarray as xr
 from openpyxl import load_workbook
 
-from ukpn.scripts.resample_data import interpolation_pandas, load_csv_to_pandas
-
 logger = logging.getLogger(__name__)
 
 
@@ -118,34 +116,6 @@ def get_metadata_from_ukpn_xlsx(
 
     return df
 
-
-def metadata_df_to_netcdf(
-    path_to_ukpn_timeseries: str, input_dataframe: Optional[pd.DataFrame] = None
-) -> xr.Dataset:
-
-    # Loading the UKPN time series data into a dataframe
-    original_df = load_csv_to_pandas(path_to_file=path_to_ukpn_timeseries)
-
-    # Interpolating time series
-    interpolated_df = interpolation_pandas(original_df=original_df)
-
-    # Getting all the time series dates
-    interpolated_timeseries = interpolated_df.index.values
-    interpolated_data_values = interpolated_df[interpolated_df.columns[0]].values
-
-    # Creating an Xarray data array
-    final_xarray = xr.DataArray(
-        data=interpolated_data_values,
-        dims="time_utc",
-        coords={"time_utc": interpolated_timeseries},
-        attrs={"Description": " This Data array consists of time-series data from UKPN"},
-    )
-
-    # Getiing the column names
-    # TODO
-    required_column_names = ["Eastings", "Northings", "Maximum Export Capacity"]
-
-    return final_xarray
 
 
 def construct_url(

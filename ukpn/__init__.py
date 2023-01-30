@@ -1,2 +1,2 @@
 """Datapipes"""
-import ukpn.load
+import ukpn.load.gsp

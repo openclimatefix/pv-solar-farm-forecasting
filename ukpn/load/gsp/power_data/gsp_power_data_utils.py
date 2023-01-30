@@ -2,13 +2,14 @@
 import os
 from pathlib import Path
 from glob import glob
-from typing import Union, Dict 
+from typing import Union, Dict, List, Optional
 import logging
 
 import xarray as xr
 import numpy as np
 import pandas as pd
 import pytz
+from datetime import datetime
 import calendar
 from pandas import DatetimeIndex
 
@@ -16,8 +17,7 @@ logger = logging.getLogger(__name__)
 
 def load_csv_to_pandas(
     path_to_file: Path[Union, str],
-    datetime_index_name: str = "time_utc",
-    time_zone: str = "Europe/London") -> pd.DataFrame:
+    datetime_index_name: str = "time_utc") -> pd.DataFrame:
     """This function resamples a time series into regular intervals
 
     Args:
@@ -43,7 +43,7 @@ def load_csv_to_pandas(
         pass
 
     # Converting into datetime format
-    df[datetime_index_name] = pd.to_datetime(df[datetime_index_name], utc = True)
+    df[datetime_index_name] = pd.to_datetime(df[datetime_index_name])
 
     # Reset index
     df = df.reset_index(drop=True)
@@ -82,6 +82,34 @@ def check_duplicates(
             duplicate_gsp_year_dict[group.columns[0]] = year_num
 
     return duplicate_gsp_year_dict
+
+def bst_to_utc(
+    original_df: pd.DataFrame,
+    time_zone: str = "Europe/London"    
+    ):
+    """Function converts a datetimeindex localtime to UTC 
+    
+    Args:
+        original_df: Dataframe loaded from the csv file
+        time_zone: Local time zone of the dataset
+    """
+    # Declaring the time zone
+    local_standard_time = pytz.timezone(time_zone)
+
+    # Getting the datetimes
+    original_df.reset_index(inplace = True)
+    original_df["time_utc"] = original_df["time_utc"].apply(lambda x: x.to_pydatetime())
+
+    # Localise datetimes to timezone
+    original_df["time_utc"] = original_df["time_utc"].apply(lambda x: local_standard_time.localize(x).astimezone(pytz.utc))
+
+    # Changing to pandas datetime
+    original_df["time_utc"] = pd.to_datetime(original_df["time_utc"])
+
+    # Set back as index
+    original_df = original_df.set_index("time_utc")
+
+    return original_df
 
 def get_gsp_data_in_dict(
     folder_destination: str,
@@ -204,7 +232,7 @@ def interpolation_pandas(
     """
 
     # Create date range with proper minute frequency that needs to be interpolated
-    interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq, utc = True)
+    interpolate_time_series = pd.date_range(start=start_date, end=end_date, freq=freq)
 
     # Creating an empty data frame with Nan's of that date range
     interpolated_data_frame = pd.Series(
