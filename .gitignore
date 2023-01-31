@@ -132,3 +132,10 @@ tests/data
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
+.flake8
+.pre-commit-config.yaml
+conftest.py
+environment.yml
+pydoc-markdown.yml
+requirements.txt
+ukpn/scripts/ukpn_dashboard_report.html
