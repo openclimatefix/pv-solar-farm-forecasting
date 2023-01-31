@@ -134,7 +134,6 @@ pv-solar-farm-forecasting.code-workspace
 .gitattributes
 .flake8
 .pre-commit-config.yaml
-conftest.py
 environment.yml
 pydoc-markdown.yml
 requirements.txt
