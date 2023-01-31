@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path
 from pprint import pprint
-from typing import Optional, Union
+from typing import Optional, Union, List, Dict
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 def get_metadata_from_ukpn_api(
     api_url: str,
+    filter_with_coords : bool = False,
     eastings: Optional[str] = None,
     northings: Optional[str] = None,
     print_data: bool = False,
@@ -25,55 +26,58 @@ def get_metadata_from_ukpn_api(
 
     Args:
         api_url: The api url link that emiits json format data
+        filter_with_coords: If true, uses coordinates to filer the data
         print_data: Optional to choose printing the data
         eastings: eastings value of the pv solar farm
         northings: Northings value of the pv solar farm
     """
 
-    response_api = requests.get(api_url)
-    while True:
-        if response_api == 200:
-            logger.info(f"The api resposne {response_api} is successful")
-        else:
-            logger.warning(f"The api resposne {response_api} is unsuccessul")
-            logger.info(f"Please enter the correct {'url'}")
-            break
-
-    # Get the data from the resposne
-    raw_data = response_api.text
-
-    # Parse the data into json format
-    data_json = json.loads(raw_data)
-
-    # Getting all the records
-    data_records = data_json["records"]
-    first_record = data_json["records"][0]
-
-    if print_data:
-        pprint(first_record)
-
-    pv_site_dict_index = []
-    # From the list of dictionaries
-    for i in range(len(data_records)):
-        if isinstance(data_records[i], dict):
-            fields = data_records[i]["fields"]
-            if isinstance(fields, dict):
-                if (
-                    fields["location_x_coordinate_eastings_where_data_is_held"] == eastings
-                    and fields["location_y_coordinate_northings_where_data_is_held"] == northings
-                ) is True:
-                    pv_site_dict_index.append(i)
-
-    # CHecking if there are any sites matching the coordinates
-    if len(pv_site_dict_index) == 0:
-        logger.info(f"There are no PV sites matching with eastinngs: {eastings}")
-        logger.info(f"There are no PV sites matching with northings: {northings}")
+    response_api = requests.head(api_url)
+    if not response_api.status_code == 200:
+        logger.info(f"The response from the link {api_url} is unsuccessful")
         return None
     else:
-        # Getting the required data from Eastings and Northings
-        data_json = data_records[pv_site_dict_index[0]]
+        logger.info(f"The resposne from the link {api_url} is successful")
 
-        return data_json
+        # Get the data from the resposne
+        response_api = requests.get(api_url)
+        raw_data = response_api.text
+
+        # Parse the data into json format
+        data_json = json.loads(raw_data)
+
+        # Getting all the records
+        data_records = data_json["records"]
+        first_record = data_json["records"][0]
+
+        if  not filter_with_coords:
+            return data_records
+        else:
+            if print_data:
+                pprint(first_record)
+
+            pv_site_dict_index = []
+            # From the list of dictionaries
+            for i in range(len(data_records)):
+                if isinstance(data_records[i], dict):
+                    fields = data_records[i]["fields"]
+                    if isinstance(fields, dict):
+                        if (
+                            fields["location_x_coordinate_eastings_where_data_is_held"] == eastings
+                            and fields["location_y_coordinate_northings_where_data_is_held"] == northings
+                        ) is True:
+                            pv_site_dict_index.append(i)
+
+            # Checking if there are any sites matching the coordinates
+            if len(pv_site_dict_index) == 0:
+                logger.info(f"There are no PV sites matching with eastinngs: {eastings}")
+                logger.info(f"There are no PV sites matching with northings: {northings}")
+                return None
+            else:
+                # Getting the required data from Eastings and Northings
+                data_json = data_records[pv_site_dict_index[0]]
+
+                return data_json
 
 
 def get_metadata_from_ukpn_xlsx(
@@ -118,8 +122,15 @@ def get_metadata_from_ukpn_xlsx(
 
 def construct_url(
     dataset_name: str = "embedded-capacity-register",
-    list_of_facets=None,
-    refiners=None,
+    list_of_facets: List = [
+        "grid_supply_point",
+        "licence_area",
+        "energy_conversion_technology_1",
+        "flexible_connection_yes_no",
+        "connection_status",
+        "primary_resource_type_group"
+    ],
+    refiners = None,
     refine_values=None,
 ):
     """This function constructs a downloadble url of JSON data
@@ -129,38 +140,49 @@ def construct_url(
 
     Args:
         dataset_name: Name of the dataset that needs to be downloaded, defined by UKPN
-        list_of_facets: List of facets that needs to be included in the JSON data
-        refiners: list of refiner terms that needs to refined from the JSON data
+        refiners: List of refiners that needs to be included in the JSON data
         refine_values: List of refine values of the refiners
 
     Note:
         refiners and refine values needs to be exactly mapped
     """
-    # Constructing a base url
-    base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
-    base_url = base_url + dataset_name
+    # GSP name in Ucase
+    refine_values[0] = refine_values[0].upper()
+    refine_values[0] = "+".join(refine_values[0].split())
 
-    # A seperator in the url
-    seperator = "&"
+    # Sanity checs
+    sanity_check = len(refiners) == len(refine_values)
 
-    # A questionare in the url
-    questionare = "q="
+    if not sanity_check:
+        logger.info(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
+        return None
+    else:
 
-    # A facet questionare in the url
-    facet_questionare = "facet="
+        # Constructing a base url
+        base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
+        base_url = base_url + dataset_name
 
-    # Constructing a facet string from the list of facets
-    facet_str = [facet_questionare + x for x in list_of_facets]
-    facet_str = seperator.join(facet_str)
-    facet_str = str(questionare + seperator + facet_str)
+        # A seperator in the url
+        seperator = "&"
 
-    # Constructing a refiner string to refine the JSON data
-    refine_questionare = "refine."
-    refiners = [refine_questionare + x for x in refiners]
-    refiners = list(map(lambda x, y: x + str("=") + y, refiners, refine_values))
-    refiners = seperator.join(refiners)
+        # A questionare in the url
+        questionare = "q="
 
-    # Constructing the final url
-    final_url = [base_url, facet_str, refiners]
-    final_url = seperator.join(final_url)
-    return final_url
+        # A facet questionare in the url
+        facet_questionare = "facet="
+
+        # Constructing a facet string from the list of facets
+        facet_str = [facet_questionare + x for x in list_of_facets]
+        facet_str = seperator.join(facet_str)
+        facet_str = str(questionare + seperator + facet_str)
+
+        # Constructing a refiner string to refine the JSON data
+        refine_questionare = "refine."
+        refiners = [refine_questionare + x for x in refiners]
+        refiners = list(map(lambda x, y: x + str("=") + y, refiners, refine_values))
+        refiners = seperator.join(refiners)
+
+        # Constructing the final url
+        final_url = [base_url, facet_str, refiners]
+        final_url = seperator.join(final_url)
+        return final_url
