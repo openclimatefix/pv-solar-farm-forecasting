@@ -15,9 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def load_csv_to_pandas(
-    path_to_file: Path[Union, str],
-    datetime_index_name: str = "time_utc"
-        ) -> pd.DataFrame :
+    path_to_file: Path[Union, str], datetime_index_name: str = "time_utc"
+) -> pd.DataFrame:
     """This function resamples a time series into regular intervals
 
     Args:
@@ -52,10 +51,7 @@ def load_csv_to_pandas(
     return df
 
 
-def bst_to_utc(
-    original_df: pd.DataFrame,
-    time_zone: str = "Europe/London"
-        ) -> pd.DataFrame :
+def bst_to_utc(original_df: pd.DataFrame, time_zone: str = "Europe/London") -> pd.DataFrame:
     """Function converts a datetimeindex localtime to UTC
 
     Args:
@@ -71,7 +67,8 @@ def bst_to_utc(
 
     # Localise datetimes to timezone
     original_df["time_utc"] = original_df["time_utc"].apply(
-        lambda x: local_standard_time.localize(x).astimezone(pytz.utc))
+        lambda x: local_standard_time.localize(x).astimezone(pytz.utc)
+    )
 
     # Changing to pandas datetime
     original_df["time_utc"] = pd.to_datetime(original_df["time_utc"])
@@ -83,10 +80,8 @@ def bst_to_utc(
 
 
 def get_gsp_data_in_dict(
-    folder_destination: str,
-    required_file_format: str = "*.csv",
-    count_gsp_data: bool = False
-        ) -> Union[pd.DataFrame, Dict]:
+    folder_destination: str, required_file_format: str = "*.csv", count_gsp_data: bool = False
+) -> Union[pd.DataFrame, Dict]:
     """This function counts the total number of GSP solar data
 
     Args:
@@ -122,9 +117,8 @@ def get_gsp_data_in_dict(
 
 
 def check_for_negative_data(
-    original_df: pd.DataFrame,
-    replace_with_nan: bool = False
-        ) -> Union[DatetimeIndex, pd.DataFrame]:
+    original_df: pd.DataFrame, replace_with_nan: bool = False
+) -> Union[DatetimeIndex, pd.DataFrame]:
     """This function helps in identifying if there are any negative values
 
     Args:
@@ -139,7 +133,7 @@ def check_for_negative_data(
         return original_df
     else:
         # Filtering the dataframe which has negative values
-        negative_df = original_df.iloc[np.where(original_df[original_df.columns[0]].values < 0.)]
+        negative_df = original_df.iloc[np.where(original_df[original_df.columns[0]].values < 0.0)]
 
         if not replace_with_nan:
             # Returns index values where there are negative numbers
@@ -152,10 +146,8 @@ def check_for_negative_data(
 
 
 def convert_xarray_to_netcdf(
-    xarray_dataarray: xr.Dataset,
-    folder_to_save: str,
-    file_name: str = "canterbury_north.nc"
-        ) -> None:
+    xarray_dataarray: xr.Dataset, folder_to_save: str, file_name: str = "canterbury_north.nc"
+) -> None:
     """This function saves the xarray dataarray in netcdf file
 
     Args:
@@ -172,9 +164,7 @@ def convert_xarray_to_netcdf(
 
     if not check_file:
         # Saving the xarray
-        xarray_dataarray.to_netcdf(
-            path=file_path,
-            engine="h5netcdf")
+        xarray_dataarray.to_netcdf(path=file_path, engine="h5netcdf")
 
         # Close the data array
         xarray_dataarray.close()

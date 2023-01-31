@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 @functional_datapipe("open_gsp_data")
 class OpenGSPDataIterDataPipe(IterDataPipe):
-    """This method loads GSP power data from .csv files and writes data into NetCDF file
-
-    """
+    """This method loads GSP power data from .csv files and writes data into NetCDF file"""
 
     def __init__(
         self,

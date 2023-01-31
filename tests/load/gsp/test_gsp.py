@@ -53,3 +53,8 @@ def test_check_non_negative_valus():
 
         # If false, means it has no negative values
         assert (non_negative_df < 0.0).any().any() == False
+
+
+def test_linting():
+    print(f"pytest successful")
+    return None
