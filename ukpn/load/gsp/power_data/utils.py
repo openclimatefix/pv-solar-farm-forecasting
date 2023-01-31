@@ -151,7 +151,7 @@ def convert_xarray_to_netcdf(
     """This function saves the xarray dataarray in netcdf file
 
     Args:
-    xarray_dataarray: The dataarray that needs to be saved
+        xarray_dataarray: The dataarray that needs to be saved
         folder_to_save: Path of the destination folder
         file_name: Name of the file to be saved
     """
