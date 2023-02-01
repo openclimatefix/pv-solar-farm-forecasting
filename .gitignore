@@ -132,5 +132,4 @@ tests/data
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
-conftest.py
 ukpn/scripts/ukpn_dashboard_report.html
