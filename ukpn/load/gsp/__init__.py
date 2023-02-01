@@ -1,1 +1,0 @@
-"""Load the GSP data"""

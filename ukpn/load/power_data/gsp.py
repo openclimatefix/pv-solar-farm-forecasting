@@ -8,7 +8,7 @@ import xarray as xr
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
 
-from ukpn.load.gsp.power_data.utils import (
+from ukpn.load.power_data.utils import (
     bst_to_utc,
     check_for_negative_data,
     convert_xarray_to_netcdf,
