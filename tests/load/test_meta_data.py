@@ -1,8 +1,7 @@
-from ukpn.load.gsp import (
+from ukpn.load import (
     get_metadata_from_ukpn_api,
     get_metadata_from_ukpn_xlsx,
-    construct_url
-)
+    construct_url)
 import requests
 
 
