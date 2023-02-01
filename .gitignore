@@ -127,10 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+tests/scripts/data
 tests/local_data
-tests/data
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
-conftest.py
+.flake8
+.pre-commit-config.yaml
+environment.yml
+pydoc-markdown.yml
+requirements.txt
 ukpn/scripts/ukpn_dashboard_report.html
