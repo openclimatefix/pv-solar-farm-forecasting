@@ -5,11 +5,7 @@ on:
   schedule:
     - cron: "0 12 * * 1"
 jobs:
-  - name: Install dependencies
-    run: |
-      pip install -r requirements.txt
-
-  - name: Python Tests
+  call-run-python-tests:
     uses: openclimatefix/.github/.github/workflows/python-test.yml@main
     with:
       # 0 means don't use pytest-xdist
