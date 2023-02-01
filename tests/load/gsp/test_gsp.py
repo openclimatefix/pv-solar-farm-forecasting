@@ -7,8 +7,8 @@ from ukpn.load.gsp.power_data import OpenGSPData, check_for_negative_data, get_g
 
 
 def test_write_netcdf():
-    folder_destination = "tests/data/ukpn_dashboard_data/test_data"
-    folder_to_save = "tests/data/ukpn_netcdf"
+    folder_destination = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_dashboard_data/test_data"
+    folder_to_save = "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_netcdf"
     file_name = "ukpn_gsp.nc"
 
     # check if file exists
@@ -39,7 +39,7 @@ def test_write_netcdf():
 def test_check_non_negative_valus():
     """Testing if any gsp's has negative values"""
     # Declaring the destination folder of all the files
-    folder_destination = Path("tests/data/ukpn_dashboard_data")
+    folder_destination = Path("/home/raj/ocf/pv-solar-farm-forecasting/tests/data/ukpn_dashboard_data")
     # Getting the data into dictionary format
     dataframe_dict = get_gsp_data_in_dict(folder_destination=folder_destination)
     # For every dataframe in dict
