@@ -8,8 +8,8 @@ jobs:
   - name: Install dependencies
     run: |
       pip install -r requirements.txt
-      
-  call-run-python-tests:
+
+  - name: Python Tests
     uses: openclimatefix/.github/.github/workflows/python-test.yml@main
     with:
       # 0 means don't use pytest-xdist
