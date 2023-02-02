@@ -2,9 +2,10 @@
 import json
 import logging
 import os
+from glob import glob
 from pathlib import Path
 from pprint import pprint
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict
 
 import numpy as np
 import pandas as pd
@@ -15,21 +16,13 @@ logger = logging.getLogger(__name__)
 
 
 def get_metadata_from_ukpn_api(
-    api_url: str,
-    filter_with_coords: bool = False,
-    eastings: Optional[str] = None,
-    northings: Optional[str] = None,
-    print_data: bool = False,
+    api_url: str
 ):
     """
     This function retrievs metadata through api calls
 
     Args:
         api_url: The api url link that emiits json format data
-        filter_with_coords: If true, uses coordinates to filer the data
-        print_data: Optional to choose printing the data
-        eastings: eastings value of the pv solar farm
-        northings: Northings value of the pv solar farm
     """
 
     response_api = requests.head(api_url)
@@ -45,40 +38,7 @@ def get_metadata_from_ukpn_api(
 
         # Parse the data into json format
         data_json = json.loads(raw_data)
-
-        # Getting all the records
-        data_records = data_json["records"]
-        first_record = data_json["records"][0]
-
-        if not filter_with_coords:
-            return data_records
-        else:
-            if print_data:
-                pprint(first_record)
-
-            pv_site_dict_index = []
-            # From the list of dictionaries
-            for i in range(len(data_records)):
-                if isinstance(data_records[i], dict):
-                    fields = data_records[i]["fields"]
-                    if isinstance(fields, dict):
-                        if (
-                            fields["location_x_coordinate_eastings_where_data_is_held"] == eastings
-                            and fields["location_y_coordinate_northings_where_data_is_held"]
-                            == northings
-                        ) is True:
-                            pv_site_dict_index.append(i)
-
-            # Checking if there are any sites matching the coordinates
-            if len(pv_site_dict_index) == 0:
-                logger.info(f"There are no PV sites matching with eastinngs: {eastings}")
-                logger.info(f"There are no PV sites matching with northings: {northings}")
-                return None
-            else:
-                # Getting the required data from Eastings and Northings
-                data_json = data_records[pv_site_dict_index[0]]
-
-                return data_json
+        return data_json
 
 
 def get_metadata_from_ukpn_xlsx(
@@ -131,10 +91,11 @@ def construct_url(
         "connection_status",
         "primary_resource_type_group",
     ],
-    refiners=None,
-    refine_values=None,
+    refine_facet:List = None,
+    refine_facet_values:List = None,
+    number_of_records: str = '5000',
 ):
-    """This function constructs a downloadble url of JSON data
+    """This function constructs a downloadable url of UKPN PV JSON data
 
     For more information, please visit
     - https://ukpowernetworks.opendatasoft.com/pages/home/
@@ -142,49 +103,104 @@ def construct_url(
     Args:
         dataset_name: Name of the dataset that needs to be downloaded, defined by UKPN
         list_of_facets: LIst of facets that needs to be included in the JSON data
-        refiners: List of refiners that needs to be included in the JSON data
-        refine_values: List of refine values of the refiners
+        refine_facet: List of refiners that needs to be included in the JSON data
+        refine_facet_values: List of refine values of the refiners
+        number_of_records: Number of records needed to be extracted
 
     Note:
         refiners and refine values needs to be exactly mapped
     """
-    # GSP name in Ucase
-    refine_values[0] = refine_values[0].upper()
-    refine_values[0] = "+".join(refine_values[0].split())
 
-    # Sanity checs
-    sanity_check = len(refiners) == len(refine_values)
+    # Constructing a base url
+    base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
+    base_url = base_url + dataset_name
 
-    if not sanity_check:
-        logger.info(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
-        return None
+    # A seperator in the url
+    seperator = "&"
+
+    # A questionare in the url
+    questionare = "q="
+
+    # Number of records needed to be extracted
+    total_rows = str("&rows="+number_of_records)
+
+    # A facet questionare in the url
+    facet_questionare = "facet="
+
+    # Constructing a facet string from the list of facets
+    facet_str = [facet_questionare + x for x in list_of_facets]
+    facet_str = seperator.join(facet_str)
+    facet_str = str(questionare + total_rows + seperator + facet_str)
+    
+    # Constructing a refiner string to refine the JSON data
+    refiners = ["energy_conversion_technology_1"]
+    refine_values = ["Photovoltaic"]
+
+    if refine_facet is None:
+        pass
     else:
+        # Sanity checs
+        sanity_check = len(refine_facet) == len(refine_facet_values)
+        if not sanity_check:
+            logger.info(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
+            return None             
+        [refiners.append(x) for x in refine_facet]
+        [refine_values.append(x) for x in refine_facet_values]
 
-        # Constructing a base url
-        base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
-        base_url = base_url + dataset_name
+    refine_questionare = "refine."
+    refiners = [refine_questionare + x for x in refiners]
+    refiners = list(map(lambda x, y: x + str("=") + y, refiners, refine_values))
+    refiners = seperator.join(refiners)
 
-        # A seperator in the url
-        seperator = "&"
+    # Getting the entire UKPN records
+    final_url = [base_url, facet_str, refiners]
+    final_url = seperator.join(final_url)
 
-        # A questionare in the url
-        questionare = "q="
+    return final_url
 
-        # A facet questionare in the url
-        facet_questionare = "facet="
+def get_gsp_names(
+    folder_destination: str,
+    file_format: str = "*.csv"
+    ) -> Dict:
+    """
+    This methods takes all the csv file names and gives their
+    respective GSP names from the UKPN dashboard
+    
+    Args:
+        folder_destination: The destination folder that has all the csv files
+        file+fomat: The file format that needs to be searched.
+    """
+    # Getting all the records
+    api_url = construct_url()
+    data_json = get_metadata_from_ukpn_api(api_url = api_url)
+    # Getting all the gsp_names
+    if isinstance(data_json, Dict):
+        gsp_facet_group = data_json["facet_groups"]
+    else:
+        return None
+    
+    # Getting the Grid supply point group
+    for group in gsp_facet_group:
+        if group["name"] == "grid_supply_point":
+            gsp_group = group["facets"]
+    # Getting the GSP names
+    gsp_names = []
+    for each_gsp in gsp_group:
+        gsp_names.append(each_gsp["name"])
 
-        # Constructing a facet string from the list of facets
-        facet_str = [facet_questionare + x for x in list_of_facets]
-        facet_str = seperator.join(facet_str)
-        facet_str = str(questionare + seperator + facet_str)
+    # Getting the file paths
+    file_paths = os.path.join(folder_destination, file_format)
+    file_paths = [x for x in glob(file_paths)]
 
-        # Constructing a refiner string to refine the JSON data
-        refine_questionare = "refine."
-        refiners = [refine_questionare + x for x in refiners]
-        refiners = list(map(lambda x, y: x + str("=") + y, refiners, refine_values))
-        refiners = seperator.join(refiners)
-
-        # Constructing the final url
-        final_url = [base_url, facet_str, refiners]
-        final_url = seperator.join(final_url)
-        return final_url
+    # Getting each file name
+    gsp_name_dict = {}
+    for file_path in file_paths:
+        base_name = os.path.basename(file_path)
+        file_name = os.path.splitext(base_name)[0]
+        i = 0
+        while i < len(gsp_names):
+            if file_name.upper() in gsp_names[i]:
+                gsp_name_dict[file_path] = gsp_names[i]
+            i+=1
+    
+    return gsp_name_dict
