@@ -1,16 +1,9 @@
 """This class is ued to retrieve data through API calls"""
 import json
 import logging
-import os
-from glob import glob
-from pathlib import Path
-from pprint import pprint
-from typing import List, Optional, Union, Dict
+from typing import Dict, Optional
 
-import numpy as np
-import pandas as pd
 import requests
-from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +13,17 @@ FACETS = [
     "energy_conversion_technology_1",
     "flexible_connection_yes_no",
     "connection_status",
-    "primary_resource_type_group"]
+    "primary_resource_type_group",
+]
 
-REFINE_FACETS = [
-    "energy_conversion_technology_1", 
-    "grid_supply_point"]
+REFINE_FACETS = ["energy_conversion_technology_1", "grid_supply_point"]
 
 
-def get_metadata_from_ukpn_api(
-    api_url: str
-):
-    """
+def get_metadata_from_ukpn_api(api_url: str):
+    """Function to get the metadata from url api call
+
     This function retrievs metadata through api calls
+    from the constructed url below
 
     Args:
         api_url: The api url link that emiits json format data
@@ -53,12 +45,11 @@ def get_metadata_from_ukpn_api(
         return data_json
 
 
-
 def construct_url(
     dataset_name: str = "embedded-capacity-register",
     gsp_names: str = None,
-    number_of_records: str = '5000',
-    get_complete_records: Optional[bool] = False
+    number_of_records: str = "5000",
+    get_complete_records: Optional[bool] = False,
 ):
     """This function constructs a downloadable url of UKPN PV JSON data
 
@@ -71,10 +62,23 @@ def construct_url(
         number_of_records: Number of records needed to be extracted
         get_complete_records: If yes, gets the link to extract entire ukpn api records
 
-    Note:
-        refiners and refine values needs to be exactly mapped
+    Retunrs:
+        final_url:
+            Base url:
+            <https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset=embedded-capacity-register&q=>
+
+            facets_str:
+            <&facet=grid_supply_point&facet=licence_area>
+            <&facet=energy_conversion_technology_1>
+            <&facet=flexible_connection_yes_no>
+            <&facet=connection_status>
+            <&facet=primary_resource_type_group>
+
+            refiners:
+            <&refine.energy_conversion_technology_1=Photovoltaic>
+            <&refine.grid_supply_point=CANTERBURY+NORTH> # Syntax GSP name
     """
-    REFINE_FACET_VARIABLES = ["Photovoltaic"]    
+    REFINE_FACET_VARIABLES = ["Photovoltaic"]
 
     # Constructing a base url
     base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
@@ -87,7 +91,7 @@ def construct_url(
     questionare = "q="
 
     # Number of records needed to be extracted
-    total_rows = str("&rows="+number_of_records)
+    total_rows = str("&rows=" + number_of_records)
 
     # A facet questionare in the url
     facet_questionare = "facet="
@@ -109,8 +113,9 @@ def construct_url(
         # Sanity checs
         sanity_check = len(REFINE_FACETS) == len(REFINE_FACET_VARIABLES)
         if not sanity_check:
-            logger.debug(f"The URL is invalid, total {REFINE_FACETS} should be equal to {REFINE_FACET_VARIABLES}")
-            return None             
+            logger.info("The URL will be invalid")
+            logger.debug(f"total {REFINE_FACETS} should be equal to {REFINE_FACET_VARIABLES}")
+            return None
 
         refine_questionare = "refine."
         refine_facets = [refine_questionare + x for x in REFINE_FACETS]
@@ -123,14 +128,21 @@ def construct_url(
 
         return final_url
 
+
 def get_gsp_names():
-    """This function extracts all the GSP names from the api
+    """This function extracts all the Syntaxed GSP names from the api
+
+    Returns:
+        ['BRAMFORD GRID 132kV',
+        'WALPOLE GIS 132KV',
+        'NORWICH MAIN 132kV',
+        'SUNDON 132kV',
+        'RAYLEIGH MAIN 132KV'
+        ...]
     """
     # Getting all the records
-    api_url = construct_url(
-        get_complete_records = True
-    )
-    data_json = get_metadata_from_ukpn_api(api_url = api_url)
+    api_url = construct_url(get_complete_records=True)
+    data_json = get_metadata_from_ukpn_api(api_url=api_url)
 
     # Getting all the gsp_names
     if isinstance(data_json, Dict):
@@ -148,23 +160,3 @@ def get_gsp_names():
     for each_gsp in gsp_group:
         gsp_names.append(each_gsp["name"])
     return gsp_names
-
-    # # Getting the file paths
-    # file_paths = os.path.join(folder_destination, file_format)
-    # file_paths = [x for x in glob(file_paths)]
-
-    # # Getting each file name
-    # gsp_name_dict = {}
-    # for file_path in file_paths:
-    #     base_name = os.path.basename(file_path)
-    #     file_name = os.path.splitext(base_name)[0]
-    #     i = 0
-    #     while i < len(gsp_names):
-    #         if file_name.upper() in gsp_names[i]:
-    #             # Joining with + seperator
-    #             gsp_name = gsp_names[i].split(' ')
-    #             gsp_name = '+'.join(gsp_name)
-    #             gsp_name_dict[file_path] = gsp_name
-    #         i+=1
-    
-    # return gsp_name_dict
