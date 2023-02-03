@@ -14,6 +14,18 @@ from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
+FACETS = [
+    "grid_supply_point",
+    "licence_area",
+    "energy_conversion_technology_1",
+    "flexible_connection_yes_no",
+    "connection_status",
+    "primary_resource_type_group"]
+
+REFINE_FACETS = [
+    "energy_conversion_technology_1", 
+    "grid_supply_point"]
+
 
 def get_metadata_from_ukpn_api(
     api_url: str
@@ -41,59 +53,12 @@ def get_metadata_from_ukpn_api(
         return data_json
 
 
-def get_metadata_from_ukpn_xlsx(
-    link_of_ecr_excel: str,
-    local_path: Path[Union, str],
-    eastings: Optional[str] = None,
-    northings: Optional[str] = None,
-) -> pd.DataFrame:
-    """Download and load the ECR file from the link provided below
-
-    For direct download, opne this link-
-    https://media.umbraco.io/uk-power-networks/0dqjxaho/embedded-capacity-register.xlsx
-
-    Args:
-        link_of_ecr_excel: Link shown above
-        local_path: The folder where the file needs to get downloaded
-        eastings: eastings value of the pv solar farm
-        northings: Northings value of the pv solar farm
-    """
-    # Download and store the excel sheet in a location
-    resp = requests.get(link_of_ecr_excel)
-    local_path = os.path.join(local_path, "ecr.xlsx")
-    with open(local_path, "wb") as output:
-        output.write(resp.content)
-
-    # Read the excel sheet
-    wb = load_workbook(local_path, read_only=True, keep_links=False)
-
-    # The sheet need and its name according to UKPN is "Register Part 1"
-    file_name = "Register Part 1"
-    for text in wb.sheetnames:
-        if file_name in text:
-            df = pd.read_excel(local_path, sheet_name=text, skiprows=1)
-
-    # Filtering the data based on the eastings and northings provided
-    for text in df.columns:
-        if "Eastings" in text:
-            df = df[df[text] == np.float64(eastings)].reset_index()
-
-    return df
-
 
 def construct_url(
     dataset_name: str = "embedded-capacity-register",
-    list_of_facets: List = [
-        "grid_supply_point",
-        "licence_area",
-        "energy_conversion_technology_1",
-        "flexible_connection_yes_no",
-        "connection_status",
-        "primary_resource_type_group",
-    ],
-    refine_facet:List = None,
-    refine_facet_values:List = None,
+    gsp_names: str = None,
     number_of_records: str = '5000',
+    get_complete_records: Optional[bool] = False
 ):
     """This function constructs a downloadable url of UKPN PV JSON data
 
@@ -102,14 +67,14 @@ def construct_url(
 
     Args:
         dataset_name: Name of the dataset that needs to be downloaded, defined by UKPN
-        list_of_facets: LIst of facets that needs to be included in the JSON data
-        refine_facet: List of refiners that needs to be included in the JSON data
-        refine_facet_values: List of refine values of the refiners
+        gsp_names: The data needed for the GSPs
         number_of_records: Number of records needed to be extracted
+        get_complete_records: If yes, gets the link to extract entire ukpn api records
 
     Note:
         refiners and refine values needs to be exactly mapped
     """
+    REFINE_FACET_VARIABLES = ["Photovoltaic"]    
 
     # Constructing a base url
     base_url = "https://ukpowernetworks.opendatasoft.com/api/records/1.0/search/?dataset="
@@ -128,82 +93,78 @@ def construct_url(
     facet_questionare = "facet="
 
     # Constructing a facet string from the list of facets
-    facet_str = [facet_questionare + x for x in list_of_facets]
+    facet_str = [facet_questionare + x for x in FACETS]
     facet_str = seperator.join(facet_str)
     facet_str = str(questionare + total_rows + seperator + facet_str)
-    
-    # Constructing a refiner string to refine the JSON data
-    refiners = ["energy_conversion_technology_1"]
-    refine_values = ["Photovoltaic"]
 
-    if refine_facet is None:
-        pass
+    # Get the entire records
+    if get_complete_records:
+        final_url = [base_url, facet_str]
+        final_url = seperator.join(final_url)
+        return final_url
     else:
+        # Adding gsp name to the list
+        REFINE_FACET_VARIABLES.append(gsp_names)
+
         # Sanity checs
-        sanity_check = len(refine_facet) == len(refine_facet_values)
+        sanity_check = len(REFINE_FACETS) == len(REFINE_FACET_VARIABLES)
         if not sanity_check:
-            logger.debug(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
+            logger.debug(f"The URL is invalid, total {REFINE_FACETS} should be equal to {REFINE_FACET_VARIABLES}")
             return None             
-        [refiners.append(x) for x in refine_facet]
-        [refine_values.append(x) for x in refine_facet_values]
 
-    refine_questionare = "refine."
-    refiners = [refine_questionare + x for x in refiners]
-    refiners = list(map(lambda x, y: x + str("=") + y, refiners, refine_values))
-    refiners = seperator.join(refiners)
+        refine_questionare = "refine."
+        refine_facets = [refine_questionare + x for x in REFINE_FACETS]
+        refiners = list(map(lambda x, y: x + str("=") + y, refine_facets, REFINE_FACET_VARIABLES))
+        refiners = seperator.join(refiners)
 
-    # Getting the entire UKPN records
-    final_url = [base_url, facet_str, refiners]
-    final_url = seperator.join(final_url)
+        # Getting the entire UKPN records
+        final_url = [base_url, facet_str, refiners]
+        final_url = seperator.join(final_url)
 
-    return final_url
+        return final_url
 
-def get_gsp_names(
-    folder_destination: str,
-    file_format: str = "*.csv"
-    ) -> Dict:
-    """
-    This methods takes all the csv file names and gives their
-    respective GSP names from the UKPN dashboard
-    
-    Args:
-        folder_destination: The destination folder that has all the csv files
-        file+fomat: The file format that needs to be searched.
+def get_gsp_names():
+    """This function extracts all the GSP names from the api
     """
     # Getting all the records
-    api_url = construct_url()
+    api_url = construct_url(
+        get_complete_records = True
+    )
     data_json = get_metadata_from_ukpn_api(api_url = api_url)
+
     # Getting all the gsp_names
     if isinstance(data_json, Dict):
         gsp_facet_group = data_json["facet_groups"]
     else:
         return None
-    
+
     # Getting the Grid supply point group
     for group in gsp_facet_group:
         if group["name"] == "grid_supply_point":
             gsp_group = group["facets"]
+
     # Getting the GSP names
     gsp_names = []
     for each_gsp in gsp_group:
         gsp_names.append(each_gsp["name"])
+    return gsp_names
 
-    # Getting the file paths
-    file_paths = os.path.join(folder_destination, file_format)
-    file_paths = [x for x in glob(file_paths)]
+    # # Getting the file paths
+    # file_paths = os.path.join(folder_destination, file_format)
+    # file_paths = [x for x in glob(file_paths)]
 
-    # Getting each file name
-    gsp_name_dict = {}
-    for file_path in file_paths:
-        base_name = os.path.basename(file_path)
-        file_name = os.path.splitext(base_name)[0]
-        i = 0
-        while i < len(gsp_names):
-            if file_name.upper() in gsp_names[i]:
-                # Joining with + seperator
-                gsp_name = gsp_names[i].split(' ')
-                gsp_name = '+'.join(gsp_name)
-                gsp_name_dict[file_path] = gsp_name
-            i+=1
+    # # Getting each file name
+    # gsp_name_dict = {}
+    # for file_path in file_paths:
+    #     base_name = os.path.basename(file_path)
+    #     file_name = os.path.splitext(base_name)[0]
+    #     i = 0
+    #     while i < len(gsp_names):
+    #         if file_name.upper() in gsp_names[i]:
+    #             # Joining with + seperator
+    #             gsp_name = gsp_names[i].split(' ')
+    #             gsp_name = '+'.join(gsp_name)
+    #             gsp_name_dict[file_path] = gsp_name
+    #         i+=1
     
-    return gsp_name_dict
+    # return gsp_name_dict
