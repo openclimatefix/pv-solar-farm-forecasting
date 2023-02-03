@@ -142,7 +142,7 @@ def construct_url(
         # Sanity checs
         sanity_check = len(refine_facet) == len(refine_facet_values)
         if not sanity_check:
-            logger.info(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
+            logger.debug(f"The URL is invalid, total {refiners} should be equal to {refine_values}")
             return None             
         [refiners.append(x) for x in refine_facet]
         [refine_values.append(x) for x in refine_facet_values]
@@ -200,7 +200,10 @@ def get_gsp_names(
         i = 0
         while i < len(gsp_names):
             if file_name.upper() in gsp_names[i]:
-                gsp_name_dict[file_path] = gsp_names[i]
+                # Joining with + seperator
+                gsp_name = gsp_names[i].split(' ')
+                gsp_name = '+'.join(gsp_name)
+                gsp_name_dict[file_path] = gsp_name
             i+=1
     
     return gsp_name_dict

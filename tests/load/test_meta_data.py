@@ -26,17 +26,17 @@ def test_metadata_api():
     assert url_resposne.status_code == 200
 
 
-def test_json_data_from_url():
-    # Constructin the url
-    refiners = ["grid_supply_point", "energy_conversion_technology_1"]
-    refine_values = ["canterbury north", "Photovoltaic"]
+# def test_json_data_from_url():
+#     # Testing for a single csv file
+#     # Constructin the url
+#     refiners = ["grid_supply_point"]
+#     refine_values = ["canterbury north"]
 
-    data = GetCenterCoordinatesGSP(
-        refine_facet = refiners, 
-        refine_facet_values = refine_values)
-    data = iter(data)
-
-    assert data is not None
+#     data = GetCenterCoordinatesGSP(
+#         refine_facet = refiners, 
+#         refine_facet_values = refine_values)
+#     data = iter(data)
+#     assert data is not None
 
 def test_get_all_the_records():
     # Testing to get the entire ECR dataset
@@ -55,5 +55,15 @@ def test_get_gsp_names():
     # Testing to get the GSP names from UKPN ECR
     folder_destimation = "/home/raj/ocf/pv-solar-farm-forecasting/tests/local_data/ukpn_dashboard_data"
     data = get_gsp_names(folder_destination = folder_destimation)
-    pprint(data)
     assert data is not None
+
+def test_get_gsp_coords():
+    # Testing to get the coords for GSPs
+    folder_destimation = "/home/raj/ocf/pv-solar-farm-forecasting/tests/local_data/ukpn_dashboard_data"
+    data = GetCenterCoordinatesGSP(
+        folder_destination = folder_destimation
+    )
+    data = next(iter(data))
+
+
+
