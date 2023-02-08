@@ -1,2 +1,2 @@
-"""Meta data Datapipes loading"""
+"""Datapipes"""
 import ukpn.load
