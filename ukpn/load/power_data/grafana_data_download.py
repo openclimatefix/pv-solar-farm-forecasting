@@ -1,7 +1,9 @@
 """Automate the download of the Grafana data"""
 import os
-from pprint import pprint
+from typing import Optional
 from time import sleep
+import logging
+import difflib
 
 from typing import List
 from selenium import webdriver
@@ -16,6 +18,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import Select
 
+logger = logging.getLogger(__name__)
 
 def get_chrome():
     if os.path.isfile('/usr/bin/chromium-browser'):
@@ -47,15 +50,34 @@ class automate_csv_download:
         self.opts.add_argument('--no-sandbox')
         self.opts.add_argument('--disable-dev-shm-usage')
 
-    def Initialise_chrome(self)-> None:
+    def Initialise_chrome(
+        self,
+        refresh_window: Optional[bool] = False)-> None:
         """Initalise the chrome browser""" 
+        # Download the browser
         self.driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()), options = self.opts)
+
+        # Open the link in a tab
         self.driver.get(self.url_link)
         self.driver.implicitly_wait(15)
-        self.driver.maximize_window()    
+        self.driver.maximize_window()
+
+        # Setting up a wait period of 30 seconds for browser operations 
         self.wait = WebDriverWait(self.driver, 30)
 
-    def get_gsp_names_in_dashbaord(self) -> List:
+        # Option to refresh the browser
+        if refresh_window:
+            self.driver.refresh()
+
+    def select_gsp_names_by_index(self)-> None:
+        """Selecting the gsps by index"""
+        # Clicking the dialog box of gsp name
+        self.element = self.driver.find_element(By.XPATH, "//a[@class = 'css-10l6kcd']").click()
+        # Counting the dropdown elements
+        self.elements = self.driver.find_elements(By.XPATH, "//div[@class='variable-options-column']")
+        self.wait.until(EC.presence_of_all_elements_located((By.XPATH, "//div[@class='variable-options-column']")))
+
+    def get_gsp_names_from_dashbaord(self) -> List:
         """Function to get all the GSP names"""
         # Clicking the dialog box of gsp name
         gsp_names = []
@@ -86,9 +108,36 @@ class automate_csv_download:
 
         # Inserting the gsp name
         self.search = self.driver.find_element(By.XPATH, "//input[@class='gf-form-input']")
-        self.search.send_keys(gsp_name)
-        self.search.send_keys(Keys.RETURN)
-        sleep(5)
+
+        # Selecting from the drop down
+        self.elements = self.driver.find_elements(By.XPATH, "//div[@class='variable-options-column']")
+        self.wait.until(EC.presence_of_all_elements_located(
+            (By.XPATH, "//div[@class='variable-options-column']")))
+        
+        # Inserting the gsp name in the dashboard
+        try:
+            self.element = self.driver.find_element(
+                By.XPATH, f"//a[@class='variable-option pointer']//span[text()='{gsp_name}']")
+            self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, f"//a[@class='variable-option pointer']//span[text()='{gsp_name}']")))
+            self.element.click()
+
+        except NoSuchElementException:
+            self.element = self.driver.find_element(
+                By.XPATH, f"//a[@class='variable-option pointer selected']//span[text()='{gsp_name}']"
+                )
+            self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, f"//a[@class='variable-option pointer selected']//span[text()='{gsp_name}']")))
+            self.element.click()
+        
+        # # Checking the gsp name
+        # self.gsp_name = gsp_name
+        # if not len(self.gsp_name.split()) > 1:
+        #     self.search.send_keys(gsp_name)
+        #     self.search.send_keys(Keys.RETURN)
+        #     sleep(5)
+        # else:
+        #     return None
     
     def scroll_to_element_and_click(
         self,
@@ -115,29 +164,45 @@ class automate_csv_download:
 
     def download_from_side_panel(
         self,
-        required_data: str = "Solar")-> None:
+        required_data: str = "Solar",
+        close_browser: Optional[bool] = False)-> None:
         """Download the csv file from the side panel"""
-        # Clicking on the Dataoptions
-        self.element = self.driver.find_element(By.XPATH, "//div[@class='css-dridf8']")
-        self.wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='css-dridf8']")))
-        self.element.click()
 
-        # Clicking the dialog box to enter the term (Solar)
-        self.element = self.driver.find_element(By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")
-        self.wait.until(EC.element_to_be_clickable((By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")))
-        self.element.click()
+        try:
+            # Clicking on the Dataoptions
+            self.element = self.driver.find_element(By.XPATH, "//div[@class='css-dridf8']")
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='css-dridf8']")))
+            self.element.click()
+        except NoSuchElementException:
+            logger.info("There is no data to be downloaded")
+            print("There is no data to be downloaded")
+            return None
+        
+        else:
+            # checking if GSP has the required data (Solar)
+            self.element = self.driver.find_element(By.XPATH, "//div[@class='css-1h5d4ck']").get_attribute("title")
+            if not self.element == required_data:
+                # Clicking the dialog box to enter the term (Solar)
+                self.element = self.driver.find_element(By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")
+                self.wait.until(EC.element_to_be_clickable((By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")))
+                self.element.click()
 
-        # Input the required data (Solar)
-        self.element = self.driver.find_element(By.ID, "react-select-3-input")
-        self.element.send_keys(f"{required_data}")
-        self.element.send_keys(Keys.RETURN)
+                # Input the required data (Solar)
+                self.element = self.driver.find_element(By.ID, "react-select-3-input")
+                self.element.send_keys(f"{required_data}")
+                self.element.send_keys(Keys.RETURN)
 
-        # Finding and clicking download csv 
-        self.element = self.driver.find_element(By.XPATH, "//button[@class='css-1m1pv8n-button']")
-        self.element.click()
+                # Clicking the download button
+                self.element = self.driver.find_element(By.XPATH, "//button[@class='css-1m1pv8n-button']")
+                self.element.click()                
+            else:
+                # Finding and clicking download csv 
+                self.element = self.driver.find_element(By.XPATH, "//button[@class='css-1m1pv8n-button']")
+                self.element.click()
 
-        # Close the driver
-        self.driver.close()
+            if close_browser:
+                # Close the driver
+                self.driver.close()            
 
 if __name__ == "__main__":
     download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data"
