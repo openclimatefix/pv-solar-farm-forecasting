@@ -60,13 +60,13 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             status = grafana.download_from_side_panel(close_browser = True)
 
             if status is None:
-                continue
+                yield status
+                
             else:
                 filepath = set_csv_filenames(
                     download_directory = self.download_directory,
-                    gsp_name = gsp_name_lcase
-                )
-            yield status
+                    gsp_name = gsp_name_lcase)
+                yield status
 
 def get_gsp_names():
     """Function to get all the GSP names from dashboard"""

@@ -20,7 +20,7 @@ def test_get_gsp_names():
 
 def test_automatic_download_one_gsp_data():
     """Testing automatic download of single gsp
-    which has solar data"""
+    which has Solar data"""
     download_directory = "tests/data/grafana_dashboard_ukpn"
     gsp_name = "SELLINDGE"
     data = DownloadGrafanaData(
@@ -31,15 +31,15 @@ def test_automatic_download_one_gsp_data():
     # If downloaded, status will be one
     assert status == 1
 
-# def test_automatic_download_non_solar():
-#     """Testing download of GSP which does
-#     not have Solar data, but other data"""
-#     download_directory = "tests/data/grafana_dashboard_ukpn"
-#     gsp_name = "WARLEY"
-#     data = DownloadGrafanaData(
-#         download_directory = download_directory,
-#         gsp_name = gsp_name
-#     )
-#     status = next(iter(data))
-#     # If not downloaded, status will be None
-#     assert status is None  
+def test_automatic_download_non_solar():
+    """Testing download of GSP which does
+    not have Solar data, but other data"""
+    download_directory = "tests/data/grafana_dashboard_ukpn"
+    gsp_name = "WARLEY"
+    data = DownloadGrafanaData(
+        download_directory = download_directory,
+        gsp_name = gsp_name
+    )
+    status = next(iter(data))
+    # If not downloaded, status will be None
+    assert status is None  

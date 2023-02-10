@@ -269,6 +269,7 @@ class automate_csv_download:
                     logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
                     logger.info("Closing the browser")
                     self.driver.close()
+                    return None
                 
                 else:
                     # Checking if the GSP has solar data
