@@ -308,15 +308,5 @@ class automate_csv_download:
                     self.driver.close()
                 except InvalidSessionIdException:
                     pass
-        return 1    
-
-if __name__ == "__main__":
-    download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data"
-    gsp_name = "WIMBLEDON 3&4"
-    grafana = automate_csv_download(
-        download_directory = download_directory
-        )
-    grafana.Initialise_chrome()
-    grafana.set_gsp_name_in_dashboard(gsp_name = gsp_name)
-    grafana.scroll_to_element_and_click()
-    grafana.download_from_side_panel()
+        logger.info("If the download is successful, returns int(1)")
+        return 1
