@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_chrome():
+    """Search for the Chrome driver 'folder'"""
     if os.path.isfile("/usr/bin/chromium-browser"):
         return "/usr/bin/chromium-browser"
     elif os.path.isfile("/usr/bin/chromium"):
@@ -40,6 +41,8 @@ def get_chrome():
 
 
 class automate_csv_download:
+    """Functions to navigate through the UKPN dashboard using Selenium webdriver"""
+
     def __init__(
         self,
         download_directory: str = None,
@@ -52,7 +55,8 @@ class automate_csv_download:
         self.prefs = {
             "download.default_directory": f"{download_directory}",
             "download.prompt_for_download": False,
-            "download.directory_upgrade": True}
+            "download.directory_upgrade": True,
+        }
         self.opts = Options()
         self.opts.add_experimental_option("prefs", self.prefs)
         self.opts.add_experimental_option("detach", True)
@@ -65,7 +69,7 @@ class automate_csv_download:
     def _wait_for_download_to_finish(self, timeout: int):
         """Wait for downloads to finish with a specified timeout.
 
-        Args
+        Args:
         ----
         directory : str
             The path to the folder where the files will be downloaded.
@@ -93,7 +97,7 @@ class automate_csv_download:
         try:
             self.driver.close()
         except InvalidSessionIdException:
-            logger.debug("The driver is already closed!")          
+            logger.debug("The driver is already closed!")
 
     def Initialise_chrome(self, refresh_window: Optional[bool] = False) -> None:
         """Initalise the chrome browser"""
@@ -289,7 +293,7 @@ class automate_csv_download:
         xpath = "//button[@class='css-1m1pv8n-button']"
         self.element = self.driver.find_element(By.XPATH, xpath)
         self.element.click()
-    
+
     def check_required_data_on_top(self, required_data: str = "Solar"):
         """Checking if the required data is on top"""
         try:
@@ -304,8 +308,8 @@ class automate_csv_download:
         except NoSuchElementException:
             logger.debug("No element to click is found")
             return None
-    
-    def check_and_download_data(self, required_data:str = "Solar"):
+
+    def check_and_download_data(self, required_data: str = "Solar"):
         """Check if the GSP has required data and download"""
         # Checking if the GSP has solar data
         self.required_data = required_data
@@ -328,58 +332,4 @@ class automate_csv_download:
             return 1
         else:
             logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
-            return None       
-        
-    # def selecting_downloading_data(
-    #     self, timeout: int = 20, required_data: str = "Solar", close_browser: Optional[bool] = False
-    # ) -> None:
-    #     """Clicking on the dialog box of data (Solar, Wind, etc.)"""
-    #     try:
-    #         # checking if GSP has the required data (Solar)
-    #         xpath = "//div[@class='css-1h5d4ck']"
-    #         self.element = self.driver.find_element(By.XPATH, xpath).get_attribute("title")
-    #     except NoSuchElementException:
-    #         logger.debug("No element to click is found")
-
-    #     else:
-    #         if not self.element == required_data:
-    #             # click on the data dialog box
-    #             status = self._click_on_data_dialog()
-    #             if status is not None:
-    #                 # Checking if the GSP has solar data
-    #                 logger.info(f"Checking if {self.gsp_name} GSP has {required_data} data")
-    #                 xpath = "//div[@class=' css-1xwhpd8']"
-    #                 self.element = self.driver.find_element(By.XPATH, xpath)
-    #                 self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-
-    #                 if required_data in self.element.text:
-    #                     # Input the required data (Solar)
-    #                     logger.info(f"Inserting the variable '{required_data}'")
-    #                     self.element = self.driver.find_element(By.ID, "react-select-3-input")
-    #                     self.element.send_keys(f"{required_data}")
-    #                     self.element.send_keys(Keys.RETURN)
-
-    #                     # Clicking the download button
-    #                     logger.info("Clicking the 'Download CSV button")
-    #                     self._click_download_button()
-    #                 else:
-    #                     logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
-    #                     logger.info("Closing the browser")
-    #                     self.driver.close()
-    #                     return None
-
-    #         else:
-    #             # Finding and clicking download csv
-    #             logger.info(f"{self.gsp_name} has {required_data} on top")
-    #             self._click_download_button()
-
-    #         if close_browser:
-    #             # Close the driver
-    #             self._wait_for_download_to_finish(timeout=timeout)
-    #             logger.info("Closing the browser")
-    #             try:
-    #                 self.driver.close()
-    #             except InvalidSessionIdException:
-    #                 pass
-    #     logger.info("If the download is successful, returns 1")
-    #     return 1
+            return None

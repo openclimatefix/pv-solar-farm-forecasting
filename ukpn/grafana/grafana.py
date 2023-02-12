@@ -1,7 +1,8 @@
+"""Datapipe to downalod UKPN GSP Solar data"""
 import logging
 import os
-from glob import glob
 import shutil
+from glob import glob
 
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
@@ -19,11 +20,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
     URL - https://dsodashboard.ukpowernetworks.co.uk/
     """
 
-    def __init__(
-        self, 
-        download_directory: str, 
-        new_directory:str = None, 
-        gsp_name: str = None):
+    def __init__(self, download_directory: str, new_directory: str = None, gsp_name: str = None):
         """Set the download directory
 
         Args:
@@ -45,7 +42,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             gsp_names_list = [self.gsp_name]
 
         for gsp_name in gsp_names_list:
-            
+
             # Initalise chrome
             grafana = automate_csv_download(download_directory=self.download_directory)
             grafana.Initialise_chrome()
@@ -61,7 +58,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             # Setting the gsp name in the dashboard
             grafana.click_on_gsp_box()
             grafana.search_for_dropdown()
-            grafana.select_a_gsp(gsp_name = gsp_name)
+            grafana.select_a_gsp(gsp_name=gsp_name)
             # Scroll to the panel
             grafana.scroll_to_element_and_click()
             # Download the data
@@ -74,8 +71,8 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             else:
                 set_csv_filenames(
                     download_directory=self.download_directory,
-                    new_directory = self.new_directory,
-                    gsp_name=gsp_name_lcase
+                    new_directory=self.new_directory,
+                    gsp_name=gsp_name_lcase,
                 )
                 yield status
 
@@ -90,24 +87,23 @@ def get_gsp_names():
     assert names is not None
     return names
 
-def set_csv_filenames(
-    download_directory: str,
-    new_directory:str,
-    gsp_name:str):
+
+def set_csv_filenames(download_directory: str, new_directory: str, gsp_name: str):
     """Function to rewrite the csv file name
-    
+
     Args:
         download_directory: The download directory for the downloads
+        new_directory: Move files from main folder to 'tests/data' folder
         gsp_name: Each GSP name of the UKPN dashboard
     """
 
     # Get the file and renaming to the gsp name
     file_type = "/*.csv"
-    files = glob(download_directory+file_type)
-    data_file = max(files, key = os.path.getctime)
+    files = glob(download_directory + file_type)
+    data_file = max(files, key=os.path.getctime)
     if os.path.isfile(data_file):
-        new_filename = os.path.join(download_directory, (gsp_name + '.csv'))
-        new_location = os.path.join(new_directory, (gsp_name + '.csv'))
+        new_filename = os.path.join(download_directory, (gsp_name + ".csv"))
+        new_location = os.path.join(new_directory, (gsp_name + ".csv"))
         # Remove the file if it already exists
         if os.path.isfile(new_location):
             os.remove(new_location)
@@ -117,4 +113,3 @@ def set_csv_filenames(
     else:
         logger.info(f"The filepath {filepath} does not exist!")
         return None
-    
