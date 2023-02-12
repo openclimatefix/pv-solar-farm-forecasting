@@ -52,7 +52,11 @@ class automate_csv_download:
         self.download_directory = download_directory
         self.url_link = url_link
 
-        self.prefs = {"download.default_directory" : f"{download_directory}"}
+        self.prefs = {
+            "download.default_directory": f"{self.download_directory}",
+            "download.prompt_for_download": False,
+            "download.directory_upgrade": True,
+            "safebrowsing.enabled": True}
         self.opts = Options()
         self.opts.add_experimental_option('prefs', self.prefs)
         self.opts.add_experimental_option("detach", True)
@@ -82,7 +86,7 @@ class automate_csv_download:
             files = os.listdir(self.download_directory)
             for fname in files:
                 if fname.endswith('.crdownload'):
-                    dl_wait = True
+                    dl_wait = True  
 
             seconds += 1
         return seconds
@@ -120,7 +124,10 @@ class automate_csv_download:
             if refresh_window:
                 self.driver.refresh()
                 logger.info("Browser window refreshed!")
-
+    
+    def get_download_path(self):
+        self.element = self.driver.get("chrome://settings/?search=Downloads")
+        return self.element
 
     def get_gsp_names_from_dashbaord(self) -> List:
         """Function to get all the GSP names"""

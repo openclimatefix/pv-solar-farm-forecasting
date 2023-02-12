@@ -21,10 +21,12 @@ def test_get_gsp_names():
 def test_automatic_download_one_gsp_data():
     """Testing automatic download of single gsp
     which has Solar data"""
-    download_directory = "tests/data/grafana_dashboard_ukpn"
+    download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting"
+    new_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard_ukpn"
     gsp_name = "SELLINDGE"
     data = DownloadGrafanaData(
         download_directory = download_directory,
+        new_directory = new_directory,
         gsp_name = gsp_name
     )
     status = next(iter(data))
@@ -34,10 +36,12 @@ def test_automatic_download_one_gsp_data():
 def test_automatic_download_non_solar():
     """Testing download of GSP which does
     not have Solar data, but other data"""
-    download_directory = "tests/data/grafana_dashboard_ukpn"
+    download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting"
+    new_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard_ukpn"
     gsp_name = "WARLEY"
     data = DownloadGrafanaData(
         download_directory = download_directory,
+        new_directory = new_directory,
         gsp_name = gsp_name
     )
     status = next(iter(data))

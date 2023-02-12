@@ -1,7 +1,7 @@
 import os
 from glob import glob
 import logging
-from typing import List
+import shutil
 
 from ukpn.grafana.grafana_data_download import automate_csv_download
 from torchdata.datapipes import functional_datapipe
@@ -19,13 +19,17 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
     def __init__(
         self,
         download_directory: str,
+        new_directory:str = None,
         gsp_name: str = None):
         """Set the download directory
         
         Args:
             download_directory: Set the folder destination for downloads
+            new_directory: Move to the tests/data
+            gsp_name: Required GSP data to be downloaded
         """
         self.download_directory = download_directory
+        self.new_directory = new_directory
         self.gsp_name = gsp_name
 
     def __iter__(self):
@@ -40,8 +44,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
         for gsp_name in gsp_names_list:
 
             # Initalise chrome
-            grafana = automate_csv_download(
-                download_directory = self.download_directory)
+            grafana = automate_csv_download(download_directory=self.download_directory)
             grafana.Initialise_chrome()
 
             # Getting the gsp names in lower case format
@@ -63,8 +66,9 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
                 yield status
                 
             else:
-                filepath = set_csv_filenames(
+                set_csv_filenames(
                     download_directory = self.download_directory,
+                    new_directory = self.new_directory,
                     gsp_name = gsp_name_lcase)
                 yield status
 
@@ -80,6 +84,7 @@ def get_gsp_names():
 
 def set_csv_filenames(
     download_directory: str,
+    new_directory:str,
     gsp_name:str):
     """Function to rewrite the csv file name
     
@@ -93,13 +98,15 @@ def set_csv_filenames(
     files = glob(download_directory+file_type)
     data_file = max(files, key = os.path.getctime)
     if os.path.isfile(data_file):
-        new_filename = os.path.join(download_directory, (gsp_name+'.csv'))
+        new_filename = os.path.join(download_directory, (gsp_name + '.csv'))
+        new_location = os.path.join(new_directory, (gsp_name + '.csv'))
         # Remove the file if it already exists
         if os.path.isfile(new_filename):
             os.remove(new_filename)
         filepath = os.rename(data_file, new_filename)
+        shutil.move(new_filename, new_location)
         return filepath
     else:
-        logger.info(f"The filepath {filepath} doesnot exist!")
+        logger.info(f"The filepath {filepath} does not exist!")
         return None
     
