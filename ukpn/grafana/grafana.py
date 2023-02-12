@@ -1,13 +1,15 @@
+import logging
 import os
 from glob import glob
-import logging
 import shutil
 
-from ukpn.grafana.grafana_data_download import automate_csv_download
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
 
+from ukpn.grafana.grafana_data_download import automate_csv_download
+
 logger = logging.getLogger(__name__)
+
 
 @functional_datapipe("download_grafana_data")
 class DownloadGrafanaDataIterDataPipe(IterDataPipe):
@@ -16,17 +18,18 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
     For reference, please open this link of the dasboard panel
     URL - https://dsodashboard.ukpowernetworks.co.uk/
     """
+
     def __init__(
-        self,
-        download_directory: str,
-        new_directory:str = None,
+        self, 
+        download_directory: str, 
+        new_directory:str = None, 
         gsp_name: str = None):
         """Set the download directory
-        
+
         Args:
             download_directory: Set the folder destination for downloads
-            new_directory: Move to the tests/data
-            gsp_name: Required GSP data to be downloaded
+            new_directory: Move files from main project folder to 'test/data'
+            gsp_name: Download for a single GSP, if None, downloads for all available GSP's
         """
         self.download_directory = download_directory
         self.new_directory = new_directory
@@ -37,12 +40,12 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
         if self.gsp_name is None:
             # Getting the list of gsp names
             gsp_names_list = get_gsp_names()
-            gsp_names_list = list(reversed(gsp_names_list))   
+            gsp_names_list = list(reversed(gsp_names_list))
         else:
             gsp_names_list = [self.gsp_name]
 
         for gsp_name in gsp_names_list:
-
+            
             # Initalise chrome
             grafana = automate_csv_download(download_directory=self.download_directory)
             grafana.Initialise_chrome()
@@ -55,22 +58,27 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
                 gsp_name_lcase = gsp_name_lcase.split()
                 gsp_name_lcase = seperator.join(gsp_name_lcase)
 
-            # Setting the gsp name in the dashboard  
-            grafana.set_gsp_name_in_dashboard(gsp_name = gsp_name)
+            # Setting the gsp name in the dashboard
+            grafana.click_on_gsp_box()
+            grafana.search_for_dropdown()
+            grafana.select_a_gsp(gsp_name = gsp_name)
             # Scroll to the panel
             grafana.scroll_to_element_and_click()
             # Download the data
-            status = grafana.download_from_side_panel(close_browser = True)
-
+            status = grafana.click_dataoptions_side_panel()
+            status = grafana._click_on_data_dialog()
+            status = grafana.check_required_data_on_top()
+            status = grafana.check_and_download_data()
             if status is None:
                 yield status
-                
             else:
                 set_csv_filenames(
-                    download_directory = self.download_directory,
+                    download_directory=self.download_directory,
                     new_directory = self.new_directory,
-                    gsp_name = gsp_name_lcase)
+                    gsp_name=gsp_name_lcase
+                )
                 yield status
+
 
 def get_gsp_names():
     """Function to get all the GSP names from dashboard"""
@@ -101,8 +109,8 @@ def set_csv_filenames(
         new_filename = os.path.join(download_directory, (gsp_name + '.csv'))
         new_location = os.path.join(new_directory, (gsp_name + '.csv'))
         # Remove the file if it already exists
-        if os.path.isfile(new_filename):
-            os.remove(new_filename)
+        if os.path.isfile(new_location):
+            os.remove(new_location)
         filepath = os.rename(data_file, new_filename)
         shutil.move(new_filename, new_location)
         return filepath

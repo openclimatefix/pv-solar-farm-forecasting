@@ -1,43 +1,40 @@
 """Automate the download of the Grafana data"""
-import os
-from typing import Optional
-from time import sleep
 import logging
-from typing import List
+import os
+from time import sleep
+from typing import List, Optional
 
 from selenium import webdriver
 from selenium.common.exceptions import (
-    NoSuchElementException, 
-    TimeoutException, 
     ElementClickInterceptedException,
-    InvalidSessionIdException)
-from selenium.webdriver.common.keys import Keys
+    InvalidSessionIdException,
+    NoSuchElementException,
+    TimeoutException,
+)
 from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
-
-logger_webdriver = logging.getLogger('selenium.webdriver.remote.remote_connection')
+logger_webdriver = logging.getLogger("selenium.webdriver.remote.remote_connection")
 logger_webdriver.setLevel(logging.WARNING)
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format = '%(asctime)s : %(levelname)s : %(message)s ')
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s : %(levelname)s : %(message)s ")
 logger = logging.getLogger(__name__)
 
 
 def get_chrome():
-    if os.path.isfile('/usr/bin/chromium-browser'):
-        return '/usr/bin/chromium-browser'
-    elif os.path.isfile('/usr/bin/chromium'):
-        return '/usr/bin/chromium'
-    elif os.path.isfile('/usr/bin/chrome'):
-        return '/usr/bin/chrome'
-    elif os.path.isfile('/usr/bin/google-chrome'):
-        return '/usr/bin/google-chrome'
+    if os.path.isfile("/usr/bin/chromium-browser"):
+        return "/usr/bin/chromium-browser"
+    elif os.path.isfile("/usr/bin/chromium"):
+        return "/usr/bin/chromium"
+    elif os.path.isfile("/usr/bin/chrome"):
+        return "/usr/bin/chrome"
+    elif os.path.isfile("/usr/bin/google-chrome"):
+        return "/usr/bin/google-chrome"
     else:
         return None
 
@@ -46,30 +43,27 @@ class automate_csv_download:
     def __init__(
         self,
         download_directory: str = None,
-        url_link: str = "https://dsodashboard.ukpowernetworks.co.uk"
-        )-> None:
+        url_link: str = "https://dsodashboard.ukpowernetworks.co.uk",
+    ) -> None:
         """Function to set the desired chrome options"""
         self.download_directory = download_directory
         self.url_link = url_link
 
         self.prefs = {
-            "download.default_directory": f"{self.download_directory}",
+            "download.default_directory": f"{download_directory}",
             "download.prompt_for_download": False,
-            "download.directory_upgrade": True,
-            "safebrowsing.enabled": True}
+            "download.directory_upgrade": True}
         self.opts = Options()
-        self.opts.add_experimental_option('prefs', self.prefs)
+        self.opts.add_experimental_option("prefs", self.prefs)
         self.opts.add_experimental_option("detach", True)
         self.opts.binary_location = get_chrome()
         self.opts.add_argument("--start-maximized")
-        self.opts.add_argument('--headless')
-        self.opts.add_argument('--no-sandbox')
-        self.opts.add_argument('--disable-dev-shm-usage')
-    
-    def wait_for_download_to_finish(
-        self,
-        timeout: int):
-        """ Wait for downloads to finish with a specified timeout.
+        self.opts.add_argument("--headless")
+        self.opts.add_argument("--no-sandbox")
+        self.opts.add_argument("--disable-dev-shm-usage")
+
+    def _wait_for_download_to_finish(self, timeout: int):
+        """Wait for downloads to finish with a specified timeout.
 
         Args
         ----
@@ -85,27 +79,37 @@ class automate_csv_download:
             dl_wait = False
             files = os.listdir(self.download_directory)
             for fname in files:
-                if fname.endswith('.crdownload'):
-                    dl_wait = True  
+                if fname.endswith(".crdownload"):
+                    dl_wait = True
 
             seconds += 1
         return seconds
 
-    def Initialise_chrome(
-        self,
-        refresh_window: Optional[bool] = False)-> None:
-        """Initalise the chrome browser""" 
+    def _close_browser(self, timeout: int = 20):
+        """Close the browser after download finish"""
+        # Close the driver
+        self._wait_for_download_to_finish(timeout=timeout)
+        logger.info("Closing the browser")
         try:
-            # Download the browser            
-            logger.info(f"Driver is getting downloaded")            
-            self.driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()), options = self.opts)
+            self.driver.close()
+        except InvalidSessionIdException:
+            logger.debug("The driver is already closed!")          
+
+    def Initialise_chrome(self, refresh_window: Optional[bool] = False) -> None:
+        """Initalise the chrome browser"""
+        try:
+            # Download the browser
+            self.driver = webdriver.Chrome(
+                service=Service(ChromeDriverManager().install()), options=self.opts
+            )
+            logger.info("Driver is getting downloaded")
 
             # Open the link in a tab
             self.driver.get(self.url_link)
             self.driver.implicitly_wait(15)
             self.driver.maximize_window()
 
-            # Setting up a wait period of 30 seconds for browser operations 
+            # Setting up a wait period of 30 seconds for browser operations
             self.wait = WebDriverWait(self.driver, 30)
 
             # Checking the website load status
@@ -113,21 +117,17 @@ class automate_csv_download:
             if title is not None:
                 logger.info("Webpage successfully loaded")
                 logger.info(f"The title of webpage is {title}")
-        
+
         except TimeoutException:
             logger.debug("Page load timeout occured!")
             logger.debug("Check the url link!")
             self.driver.refresh()
-        
+
         else:
             # Option to refresh the browser
             if refresh_window:
                 self.driver.refresh()
                 logger.info("Browser window refreshed!")
-    
-    def get_download_path(self):
-        self.element = self.driver.get("chrome://settings/?search=Downloads")
-        return self.element
 
     def get_gsp_names_from_dashbaord(self) -> List:
         """Function to get all the GSP names"""
@@ -136,185 +136,250 @@ class automate_csv_download:
         gsp_names = []
 
         try:
-            self.element = self.driver.find_element(
-                By.XPATH, "//a[@class = 'css-10l6kcd']")
-            self.wait.until(EC.element_to_be_clickable(
-                (By.XPATH, "//a[@class='css-10l6kcd']")))
+            xpath = "//a[@class = 'css-10l6kcd']"
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
-        
+
         except NoSuchElementException:
             logger.debug("Check the link")
             logger.debug("Increase browser loading wait time!")
             self.driver.close()
         else:
             # Finding the drop down of GSP names
-            self.elements = self.driver.find_elements(
-                By.XPATH, "//span[contains(@aria-label, 'Dashboard template variables')]")
-            self.wait.until(EC.presence_of_all_elements_located(
-                (By.XPATH, "//span[contains(@aria-label, 'Dashboard template variables')]")))
-            
+            xpath = "//span[contains(@aria-label, 'Dashboard template variables')]"
+            self.elements = self.driver.find_elements(By.XPATH, xpath)
+            self.wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+
             # Getting each gsp name
             for element in self.elements:
                 gsp_names.append(element.text)
-            
+
             # Refreshing the browser
             logger.info("Closing the browser")
             self.driver.close()
 
         return gsp_names
 
-    def set_gsp_name_in_dashboard(
-        self,
-        gsp_name: str)-> None:
-        """Set the GSP name in the dashboard
-        Args:
-            gsp_name: Should be All caps, and reflects sytnax from dashboard names
-        """
+    def click_on_gsp_box(self):
+        """Function to click on the GSP dialog box"""
+        try:
+            # Clicking on the gsp name dialog box to input required gsp name
+            xpath = "//a[@class = 'css-10l6kcd']"
+            logger.info("Clicking on the GSP dialog box")
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            self.element.click()
+            return 1
+
+        except ElementClickInterceptedException:
+            logger.debug("The dialog box is open to enter a GSP name")
+            return None
+
+    def search_for_dropdown(self) -> None:
+        """Search for dropdown of GSP names"""
+        try:
+            # Selecting from the drop down
+            xpath = "//div[@class='variable-options-column']"
+            logger.info("Searching for the dropdown of GSP names")
+            self.elements = self.driver.find_elements(By.XPATH, xpath)
+            self.wait.until(EC.presence_of_all_elements_located((By.XPATH, xpath)))
+            return 1
+
+        except NoSuchElementException:
+            logger.debug("The drop down of gsp names has not been found!")
+            return None
+
+    def select_a_gsp(self, gsp_name: str):
+        """Select a GSP for the data download"""
+        # Inserting the gsp name in the dashboard
         # Declaring the GSP name
         self.gsp_name = gsp_name
         try:
-            # Clicking on the gsp name dialog box to input required gsp name            
-            logger.info("Clicking on the GSP dialog box")
-            self.element = self.driver.find_element(By.XPATH, "//a[@class = 'css-10l6kcd']")
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//a[@class = 'css-10l6kcd']")))
+            xpath = f"//a[@class='variable-option pointer']//span[text()='{self.gsp_name}']"
+            logger.info(f"Selecting the {self.gsp_name} GSP")
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
+            return 1
 
-        except ElementClickInterceptedException:
-            logger.debug(f"The dialog box is open to enter a {self.gsp_name} GSP")
-            pass
-        
-        else:
-            # Selecting from the drop down
-            logger.info("Searching for the dropdown of GSP names")
-            self.elements = self.driver.find_elements(By.XPATH, "//div[@class='variable-options-column']")
-            self.wait.until(EC.presence_of_all_elements_located(
-                (By.XPATH, "//div[@class='variable-options-column']")))
-            
-            # Inserting the gsp name in the dashboard
-            try:
-                logger.info(f"Selecting the {self.gsp_name} GSP")
-                self.element = self.driver.find_element(
-                    By.XPATH, f"//a[@class='variable-option pointer']//span[text()='{self.gsp_name}']")
-                self.wait.until(EC.element_to_be_clickable(
-                    (By.XPATH, f"//a[@class='variable-option pointer']//span[text()='{self.gsp_name}']")))
-                self.element.click()
-
-            except NoSuchElementException:
-                logger.info(f"Selecting the {self.gsp_name} GSP")
-                self.element = self.driver.find_element(
-                    By.XPATH, f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']"
-                    )
-                self.wait.until(EC.element_to_be_clickable(
-                    (By.XPATH, f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']")))
-                self.element.click()
+        except NoSuchElementException:
+            logger.info(f"Selecting the {self.gsp_name} GSP")
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            self.element.click()
+            return None
 
     def scroll_to_element_and_click(
         self,
         element_id: str = "panel-42",
-        panel_title_class:str = "panel-title-text",
-        panel_title_text: str = "Generator outputs for all metered generation",     
-        drop_down_class:str = "dropdown-item-text",
-        drop_down_text:str = "Inspect")-> None:
+        panel_title_class: str = "panel-title-text",
+        panel_title_text: str = "Generator outputs for all metered generation",
+        drop_down_class: str = "dropdown-item-text",
+        drop_down_text: str = "Inspect",
+    ):
         """Scroll to the element needed"""
         try:
-            # Scrolling to the element        
+            # Scrolling to the element
             logger.info(f"Seaching for the '{panel_title_text}' panel of {self.gsp_name}")
             self.element = self.wait.until(EC.presence_of_element_located((By.ID, element_id)))
             self.driver.execute_script("arguments[0].scrollIntoView(true);", self.element)
-            
+
             # Clicking on the panel
+            xpath = f"//span[@class='{panel_title_class}' and text()='{panel_title_text}']"
             logger.info(f"Clicking on the '{panel_title_text}' panel of {self.gsp_name}")
-            self.element = self.driver.find_element(By.XPATH, f"//span[@class='{panel_title_class}' and text()='{panel_title_text}']")
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//span[@class='{panel_title_class}' and text()='{panel_title_text}']")))
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
 
             # Get the side inspect element
+            xpath = f"//span[@class='{drop_down_class}' and text()='{drop_down_text}']"
             logger.info(f"CLicking on the {drop_down_text} element of {self.gsp_name}")
-            self.element = self.driver.find_element(By.XPATH, f"//span[@class='{drop_down_class}' and text()='{drop_down_text}']")
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, f"//span[@class='{drop_down_class}' and text()='{drop_down_text}']")))
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
-        
+            return 1
+
         except NoSuchElementException or TimeoutException:
             logger.debug("Check the url link!")
             logger.debug("Increase the page loading wait time!")
             logger.info("Closing the browser")
             self.driver.close()
+            return None
 
-    def download_from_side_panel(
-        self,
-        timeout: int = 20,
-        required_data: str = "Solar",
-        close_browser: Optional[bool] = False):
-        """Download the csv file from the side panel"""
-
+    def click_dataoptions_side_panel(self):
+        """Click on the Dataoptions from side panel"""
         try:
             # Clicking on the Dataoptions
+            xpath = "//div[@class='css-dridf8']"
             logger.info("Searching for 'DataOptions' element in the side panel")
-            self.element = self.driver.find_element(By.XPATH, "//div[@class='css-dridf8']")
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//div[@class='css-dridf8']")))
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
+            return 1
 
         except NoSuchElementException:
             logger.debug("There is no data to be downloaded on the side panel")
             logger.info("Closing the browser")
             self.driver.close()
             return None
-        
-        else:
+
+    def _click_on_data_dialog(self):
+        """Clicking on the data dialog box"""
+        try:
+            # Clicking the dialog box to enter the term (Solar)
+            logger.info("Clicking on the dialog box of type of data")
+            logger.info("Type of data are Solar, Wind, Diesel, etc.")
+            xpath = "//div[@class='css-17rc2pp-input-wrapper']"
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+            self.element.click()
+            return 1
+
+        except NoSuchElementException:
+            logger.debug(f"This {self.gsp_name} GSP does not have any data")
+            logger.info("Closing the browser")
+            self.driver.close()
+            return None
+
+    def _click_download_button(self) -> None:
+        """Click the download button"""
+        # Clicking the download button
+        logger.info("Clicking the 'Download CSV button")
+        xpath = "//button[@class='css-1m1pv8n-button']"
+        self.element = self.driver.find_element(By.XPATH, xpath)
+        self.element.click()
+    
+    def check_required_data_on_top(self, required_data: str = "Solar"):
+        """Checking if the required data is on top"""
+        try:
+            self.required_data = required_data
             # checking if GSP has the required data (Solar)
-            self.element = self.driver.find_element(By.XPATH, "//div[@class='css-1h5d4ck']").get_attribute("title")
-            if not self.element == required_data:
-                try:
-                    # Clicking the dialog box to enter the term (Solar)
-                    logger.info("Clicking on the dialog box of type of data")
-                    logger.info("Type of data are Solar, Wind, Diesel, etc.")
-                    self.element = self.driver.find_element(By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")
-                    self.wait.until(EC.element_to_be_clickable((By.XPATH,"//div[@class='css-17rc2pp-input-wrapper']")))
-                    self.element.click()
-                
-                except NoSuchElementException:
-                    logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
-                    logger.info("Closing the browser")
-                    self.driver.close()
-                    return None
-                
-                else:
-                    # Checking if the GSP has solar data
-                    logger.info(f"Checking if {self.gsp_name} GSP has {required_data} data")
-                    self.element = self.driver.find_element(By.XPATH, "//div[@class=' css-1xwhpd8']")
-                    self.wait.until(EC.presence_of_element_located(
-                        (By.XPATH, "//div[@class=' css-1xwhpd8']")))
-
-                    if required_data in self.element.text:
-                        # Input the required data (Solar)
-                        logger.info(f"Inserting the variable '{required_data}'")
-                        self.element = self.driver.find_element(By.ID, "react-select-3-input")
-                        self.element.send_keys(f"{required_data}")
-                        self.element.send_keys(Keys.RETURN)
-
-                        # Clicking the download button
-                        logger.info("Clicking the 'Download CSV button")
-                        self.element = self.driver.find_element(By.XPATH, "//button[@class='css-1m1pv8n-button']")
-                        self.element.click()
-                    else:
-                         logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
-                         logger.info("Closing the browser")
-                         self.driver.close()
-                         return None           
-            
+            xpath = "//div[@class='css-1h5d4ck']"
+            self.element = self.driver.find_element(By.XPATH, xpath).get_attribute("title")
+            if self.element == self.required_data:
+                return 1
             else:
-                # Finding and clicking download csv 
-                logger.info(f"{self.gsp_name} has {required_data} on top")
-                self.element = self.driver.find_element(By.XPATH, "//button[@class='css-1m1pv8n-button']")
-                self.element.click()
+                return None
+        except NoSuchElementException:
+            logger.debug("No element to click is found")
+            return None
+    
+    def check_and_download_data(self, required_data:str = "Solar"):
+        """Check if the GSP has required data and download"""
+        # Checking if the GSP has solar data
+        self.required_data = required_data
+        logger.info(f"Checking if {self.gsp_name} GSP has {self.required_data} data")
+        xpath = "//div[@class=' css-1xwhpd8']"
+        self.element = self.driver.find_element(By.XPATH, xpath)
+        self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
 
-            if close_browser:
-                # Close the driver
-                self.wait_for_download_to_finish(timeout = timeout)
-                logger.info("Closing the browser")
-                try:
-                    self.driver.close()
-                except InvalidSessionIdException:
-                    pass
-        logger.info("If the download is successful, returns int(1)")
-        return 1
+        if self.required_data in self.element.text:
+            # Input the required data (Solar)
+            logger.info(f"Inserting the variable '{required_data}'")
+            self.element = self.driver.find_element(By.ID, "react-select-3-input")
+            self.element.send_keys(f"{required_data}")
+            self.element.send_keys(Keys.RETURN)
+
+            # Clicking the download button
+            logger.info("Clicking the 'Download CSV button")
+            self._click_download_button()
+            self._close_browser()
+            return 1
+        else:
+            logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
+            return None       
+        
+    # def selecting_downloading_data(
+    #     self, timeout: int = 20, required_data: str = "Solar", close_browser: Optional[bool] = False
+    # ) -> None:
+    #     """Clicking on the dialog box of data (Solar, Wind, etc.)"""
+    #     try:
+    #         # checking if GSP has the required data (Solar)
+    #         xpath = "//div[@class='css-1h5d4ck']"
+    #         self.element = self.driver.find_element(By.XPATH, xpath).get_attribute("title")
+    #     except NoSuchElementException:
+    #         logger.debug("No element to click is found")
+
+    #     else:
+    #         if not self.element == required_data:
+    #             # click on the data dialog box
+    #             status = self._click_on_data_dialog()
+    #             if status is not None:
+    #                 # Checking if the GSP has solar data
+    #                 logger.info(f"Checking if {self.gsp_name} GSP has {required_data} data")
+    #                 xpath = "//div[@class=' css-1xwhpd8']"
+    #                 self.element = self.driver.find_element(By.XPATH, xpath)
+    #                 self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+
+    #                 if required_data in self.element.text:
+    #                     # Input the required data (Solar)
+    #                     logger.info(f"Inserting the variable '{required_data}'")
+    #                     self.element = self.driver.find_element(By.ID, "react-select-3-input")
+    #                     self.element.send_keys(f"{required_data}")
+    #                     self.element.send_keys(Keys.RETURN)
+
+    #                     # Clicking the download button
+    #                     logger.info("Clicking the 'Download CSV button")
+    #                     self._click_download_button()
+    #                 else:
+    #                     logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
+    #                     logger.info("Closing the browser")
+    #                     self.driver.close()
+    #                     return None
+
+    #         else:
+    #             # Finding and clicking download csv
+    #             logger.info(f"{self.gsp_name} has {required_data} on top")
+    #             self._click_download_button()
+
+    #         if close_browser:
+    #             # Close the driver
+    #             self._wait_for_download_to_finish(timeout=timeout)
+    #             logger.info("Closing the browser")
+    #             try:
+    #                 self.driver.close()
+    #             except InvalidSessionIdException:
+    #                 pass
+    #     logger.info("If the download is successful, returns 1")
+    #     return 1
