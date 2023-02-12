@@ -45,10 +45,12 @@ class automate_csv_download:
 
     def __init__(
         self,
+        required_data: str = "Solar",
         download_directory: str = None,
         url_link: str = "https://dsodashboard.ukpowernetworks.co.uk",
     ) -> None:
         """Function to set the desired chrome options"""
+        self.required_data = required_data
         self.download_directory = download_directory
         self.url_link = url_link
 
@@ -205,14 +207,21 @@ class automate_csv_download:
             self.element = self.driver.find_element(By.XPATH, xpath)
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
-            return 1
 
         except NoSuchElementException:
-            logger.info(f"Selecting the {self.gsp_name} GSP")
-            self.element = self.driver.find_element(By.XPATH, xpath)
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
-            self.element.click()
-            return None
+            try:
+                xpath = f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']"
+                logger.info(f"Selecting the {self.gsp_name} GSP")
+                self.element = self.driver.find_element(By.XPATH, xpath)
+                self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                self.element.click()
+            except NoSuchElementException:
+                logger.debug("No clickable GSP name is found")
+                return None
+            else:
+                return 1
+        else:
+            return 1
 
     def scroll_to_element_and_click(
         self,
@@ -264,8 +273,6 @@ class automate_csv_download:
 
         except NoSuchElementException:
             logger.debug("There is no data to be downloaded on the side panel")
-            logger.info("Closing the browser")
-            self.driver.close()
             return None
 
     def _click_on_data_dialog(self):
@@ -282,8 +289,6 @@ class automate_csv_download:
 
         except NoSuchElementException:
             logger.debug(f"This {self.gsp_name} GSP does not have any data")
-            logger.info("Closing the browser")
-            self.driver.close()
             return None
 
     def _click_download_button(self) -> None:
@@ -294,10 +299,9 @@ class automate_csv_download:
         self.element = self.driver.find_element(By.XPATH, xpath)
         self.element.click()
 
-    def check_required_data_on_top(self, required_data: str = "Solar"):
+    def check_required_data_on_top(self):
         """Checking if the required data is on top"""
         try:
-            self.required_data = required_data
             # checking if GSP has the required data (Solar)
             xpath = "//div[@class='css-1h5d4ck']"
             self.element = self.driver.find_element(By.XPATH, xpath).get_attribute("title")
@@ -309,27 +313,30 @@ class automate_csv_download:
             logger.debug("No element to click is found")
             return None
 
-    def check_and_download_data(self, required_data: str = "Solar"):
+    def check_and_download_data(self):
         """Check if the GSP has required data and download"""
         # Checking if the GSP has solar data
-        self.required_data = required_data
         logger.info(f"Checking if {self.gsp_name} GSP has {self.required_data} data")
-        xpath = "//div[@class=' css-1xwhpd8']"
-        self.element = self.driver.find_element(By.XPATH, xpath)
-        self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
-
-        if self.required_data in self.element.text:
-            # Input the required data (Solar)
-            logger.info(f"Inserting the variable '{required_data}'")
-            self.element = self.driver.find_element(By.ID, "react-select-3-input")
-            self.element.send_keys(f"{required_data}")
-            self.element.send_keys(Keys.RETURN)
-
-            # Clicking the download button
-            logger.info("Clicking the 'Download CSV button")
-            self._click_download_button()
-            self._close_browser()
-            return 1
-        else:
-            logger.debug(f"{self.gsp_name} GSP does not have {required_data} data")
+        try:
+            xpath = "//div[@class=' css-1xwhpd8']"
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
+        except NoSuchElementException:
+            logger.debug(f"{self.gsp_name} GSP has no dropdown data panel")
             return None
+        else:
+            if self.required_data in self.element.text:
+                # Input the required data (Solar)
+                logger.info(f"Inserting the variable '{self.required_data}'")
+                self.element = self.driver.find_element(By.ID, "react-select-3-input")
+                self.element.send_keys(f"{self.required_data}")
+                self.element.send_keys(Keys.RETURN)
+
+                # Clicking the download button
+                logger.info("Clicking the 'Download CSV button")
+                self._click_download_button()
+                self._close_browser()
+                return 1
+            else:
+                logger.debug(f"{self.gsp_name} GSP does not have {self.required_data} data")
+                return None
