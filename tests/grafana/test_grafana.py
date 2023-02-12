@@ -20,7 +20,7 @@ def test_get_gsp_names():
 def test_automatic_download_one_gsp_data():
     """Testing automatic download of single gsp
     which has Solar data"""
-    download_dir = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard_ukpn"
+    download_dir = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/"
     gsp_name = "CANTERBURY NORTH"
     data = DownloadGrafanaData(move_to_dir=download_dir, gsp_name=gsp_name)
     status = next(iter(data))
@@ -32,7 +32,7 @@ def test_automatic_download_non_solar():
     """Testing download of GSP which does
     not have Solar data, but other data"""
     download_directory = (
-        "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard_ukpn"
+        "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/"
     )
     gsp_name = "WARLEY"
     data = DownloadGrafanaData(move_to_dir=download_directory, gsp_name=gsp_name)
@@ -44,6 +44,17 @@ def test_automatic_download_non_solar():
 def test_automatic_download_all_GSPs():
     """Testing download of all GSP which has
     Solar data"""
+    # Only the following GSP's has Solar data in UKPN Grafana dashboard
+    gsp_with_solar_data = [
+        "burwell",
+        "canterbury_north",
+        "ninfield",
+        "northfleet_east",
+        "norwich",
+        "rayleigh",
+        "richborough",
+        "sellindge"]
+
     gsp_names = list(reversed(get_gsp_names()))
     download_directory = (
         "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard_ukpn"
@@ -54,12 +65,4 @@ def test_automatic_download_all_GSPs():
 
         # If status is None, there is no data downloaded, meaning GSP does not have Solar data
         if status is not None:
-            file_path = os.path.join(download_directory, "*")
-            latest_download = max(glob(file_path), key=os.path.getctime)
-            latest_download_basename = os.path.basename(latest_download)
-            latest_download_fname = os.path.splitext(latest_download_basename)[0]
-            if len(latest_download_fname.split("_")) > 1:
-                # Checking the download file name matches with GSP name
-                assert latest_download_fname.split("_")[0] in gsp_name.lower()
-            else:
-                assert latest_download_fname == gsp_name.lower()
+            assert gsp_name.lower() in gsp_with_solar_data

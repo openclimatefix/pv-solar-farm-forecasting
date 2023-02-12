@@ -128,7 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 tests/scripts/data
-tests/local_data
+tests/data/
 pv-solar-farm-forecasting.code-workspace
 .vscode
 .gitattributes
@@ -138,3 +138,4 @@ environment.yml
 pydoc-markdown.yml
 requirements.txt
 ukpn/scripts/ukpn_dashboard_report.html
+tests/data/grafana_dashboard_ukpn/canterbury_north.csv
