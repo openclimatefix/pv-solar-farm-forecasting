@@ -4,9 +4,10 @@ import os
 import shutil
 from glob import glob
 
+from selenium.common.exceptions import InvalidSessionIdException
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
-from selenium.common.exceptions import InvalidSessionIdException
+
 from ukpn.grafana.grafana_data_download import automate_csv_download
 
 logger = logging.getLogger(__name__)
@@ -21,16 +22,18 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
     """
 
     def __init__(
-        self, 
-        download_directory: str = os.getcwd(), 
+        self,
+        download_directory: str = os.getcwd(),
         move_to_dir: str = None,
-        required_data:str = 'Solar',
-        gsp_name: str = None):
+        required_data: str = "Solar",
+        gsp_name: str = None,
+    ):
         """Set the download directory
 
         Args:
             download_directory: Set the folder destination for downloads
             move_to_dir: Move files from main project folder to 'test/data'
+            required_data: The data that is required to download
             gsp_name: Download for a single GSP, if None, downloads for all available GSP's
         """
         self.download_directory = download_directory
@@ -82,9 +85,9 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
                     yield status
                 else:
                     set_csv_filenames(
-                        download_directory = self.download_directory,
-                        move_to_dir = self.move_to_dir,
-                        gsp_name = gsp_name_lcase,
+                        download_directory=self.download_directory,
+                        move_to_dir=self.move_to_dir,
+                        gsp_name=gsp_name_lcase,
                     )
                     yield status
 

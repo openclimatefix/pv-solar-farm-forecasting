@@ -202,15 +202,18 @@ class automate_csv_download:
         # Declaring the GSP name
         self.gsp_name = gsp_name
         try:
-            xpath = f"//a[@class='variable-option pointer']//span[text()='{self.gsp_name}']"
+            xpath = (
+                f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']"
+            )
             logger.info(f"Selecting the {self.gsp_name} GSP")
             self.element = self.driver.find_element(By.XPATH, xpath)
             self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
             self.element.click()
 
         except NoSuchElementException:
+
             try:
-                xpath = f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']"
+                xpath = f"//a[@class='variable-option pointer']//span[text()='{self.gsp_name}']"
                 logger.info(f"Selecting the {self.gsp_name} GSP")
                 self.element = self.driver.find_element(By.XPATH, xpath)
                 self.wait.until(EC.element_to_be_clickable((By.XPATH, xpath)))
