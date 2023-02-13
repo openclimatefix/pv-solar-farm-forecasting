@@ -37,6 +37,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             new_directory: Move files from main project folder to 'test/data'
             required_data: The data that is required to download
             gsp_name: Download for a single GSP, if None, downloads for all available GSP's
+                Enter a GSP names available from UKPN dashboard, IN ALL CAPS
             just_return_status: Retruns the status of required data download for a GSP,
                 If '1' data can be downloaded, if 'None', data can not be downloaded
         """
