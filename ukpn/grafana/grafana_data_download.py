@@ -124,7 +124,7 @@ class automate_csv_download:
             title = self.driver.title
             if title is not None:
                 logger.info("Webpage successfully loaded")
-                logger.info(f"The title of webpage is {title}")       
+                logger.info(f"The title of webpage is {title}")
 
         except TimeoutException:
             logger.debug("Page load timeout occured!")
@@ -298,7 +298,7 @@ class automate_csv_download:
             logger.debug(f"This {self.gsp_name} GSP does not have any data")
             return None
 
-    def _click_download_button(self, just_return_status:Optional[bool] = True):
+    def _click_download_button(self, just_return_status: Optional[bool] = True):
         """Click the download button"""
         try:
             self.just_return_status = just_return_status
@@ -350,7 +350,7 @@ class automate_csv_download:
 
                 # Clicking the download button
                 logger.info("Clicking the 'Download CSV button")
-                status = self._click_download_button(just_return_status = self.just_return_status)
+                status = self._click_download_button(just_return_status=self.just_return_status)
                 status = self._close_browser()
                 return status
             else:

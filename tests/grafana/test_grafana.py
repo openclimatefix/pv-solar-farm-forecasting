@@ -49,7 +49,8 @@ def test_automatic_download_all_GSPs():
         "norwich",
         "rayleigh",
         "richborough",
-        "sellindge"]
+        "sellindge",
+    ]
 
     gsp_names = list(reversed(get_gsp_names()))
     for gsp_name in gsp_names:

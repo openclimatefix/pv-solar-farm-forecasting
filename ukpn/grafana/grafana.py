@@ -28,7 +28,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
         new_directory: str = None,
         required_data: str = "Solar",
         gsp_name: str = None,
-        just_return_status: Optional[bool] = True
+        just_return_status: Optional[bool] = True,
     ):
         """Set the download directory
 
@@ -37,7 +37,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             new_directory: Move files from main project folder to 'test/data'
             required_data: The data that is required to download
             gsp_name: Download for a single GSP, if None, downloads for all available GSP's
-            just_return_status: Retruns the status of required data download for a GSP, 
+            just_return_status: Retruns the status of required data download for a GSP,
                 If '1' data can be downloaded, if 'None', data can not be downloaded
         """
         self.download_directory = download_directory
@@ -79,8 +79,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
                 status = grafana.click_dataoptions_side_panel()
                 status = grafana._click_on_data_dialog()
                 status = grafana.check_required_data_on_top()
-                status = grafana.check_and_download_data(
-                    just_return_status = self.just_return_status)
+                status = grafana.check_and_download_data(just_return_status=self.just_return_status)
 
             except InvalidSessionIdException:
                 logger.debug(f"{gsp_name} GSP data panel is empty")
@@ -100,7 +99,6 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
                             gsp_name=gsp_name_lcase,
                         )
                         yield status
-        
 
 
 def get_gsp_names():
