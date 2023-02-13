@@ -98,8 +98,10 @@ class automate_csv_download:
         logger.info("Closing the browser")
         try:
             self.driver.close()
+            return 1
         except InvalidSessionIdException:
             logger.debug("The driver is already closed!")
+            return 0
 
     def Initialise_chrome(self, refresh_window: Optional[bool] = False) -> None:
         """Initalise the chrome browser"""
@@ -122,18 +124,20 @@ class automate_csv_download:
             title = self.driver.title
             if title is not None:
                 logger.info("Webpage successfully loaded")
-                logger.info(f"The title of webpage is {title}")
+                logger.info(f"The title of webpage is {title}")       
 
         except TimeoutException:
             logger.debug("Page load timeout occured!")
             logger.debug("Check the url link!")
             self.driver.refresh()
+            return 0
 
         else:
             # Option to refresh the browser
             if refresh_window:
                 self.driver.refresh()
                 logger.info("Browser window refreshed!")
+        return 1
 
     def get_gsp_names_from_dashbaord(self) -> List:
         """Function to get all the GSP names"""
@@ -294,13 +298,21 @@ class automate_csv_download:
             logger.debug(f"This {self.gsp_name} GSP does not have any data")
             return None
 
-    def _click_download_button(self) -> None:
+    def _click_download_button(self, just_return_status:Optional[bool] = True):
         """Click the download button"""
-        # Clicking the download button
-        logger.info("Clicking the 'Download CSV button")
-        xpath = "//button[@class='css-1m1pv8n-button']"
-        self.element = self.driver.find_element(By.XPATH, xpath)
-        self.element.click()
+        try:
+            self.just_return_status = just_return_status
+            # Clicking the download button
+            logger.info("Clicking the 'Download CSV button")
+            xpath = "//button[@class='css-1m1pv8n-button']"
+            self.element = self.driver.find_element(By.XPATH, xpath)
+            if not self.just_return_status:
+                self.element.click()
+            return 1
+        except NoSuchElementException:
+            logger.debug("There is no Download button!")
+            logger.debug("Check if the GSP has the required data to download!")
+            return None
 
     def check_required_data_on_top(self):
         """Checking if the required data is on top"""
@@ -316,8 +328,9 @@ class automate_csv_download:
             logger.debug("No element to click is found")
             return None
 
-    def check_and_download_data(self):
+    def check_and_download_data(self, just_return_status: Optional[bool] = True):
         """Check if the GSP has required data and download"""
+        self.just_return_status = just_return_status
         # Checking if the GSP has solar data
         logger.info(f"Checking if {self.gsp_name} GSP has {self.required_data} data")
         try:
@@ -337,9 +350,9 @@ class automate_csv_download:
 
                 # Clicking the download button
                 logger.info("Clicking the 'Download CSV button")
-                self._click_download_button()
-                self._close_browser()
-                return 1
+                status = self._click_download_button(just_return_status = self.just_return_status)
+                status = self._close_browser()
+                return status
             else:
                 logger.debug(f"{self.gsp_name} GSP does not have {self.required_data} data")
                 return None
