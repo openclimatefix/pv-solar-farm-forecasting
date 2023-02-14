@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 class download_data(feature_panel):
     """Fucntions to download required data"""
 
-    def __init__(self, download_directory: str = None, required_data: str = "Solar", timeout: int = 20) -> None:
+    def __init__(
+        self, download_directory: str = None, required_data: str = "Solar", timeout: int = 20
+    ) -> None:
         """Download the data from the side panel of the dashboard"""
         super().__init__()
         self.download_directory = download_directory
@@ -116,7 +118,7 @@ class download_data(feature_panel):
                 logger.info("Clicking the 'Download CSV button")
                 status = self._click_download_button()
                 logger.info("Waiting for the download to finish!")
-                self._wait_for_download_to_finish(timeout=self.timeout)                
+                self._wait_for_download_to_finish(timeout=self.timeout)
                 return status
             else:
                 logger.debug(f"{self.gsp_name} GSP does not have {self.required_data} data")
