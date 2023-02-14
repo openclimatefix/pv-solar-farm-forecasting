@@ -1,8 +1,9 @@
 import logging
-import os
-from glob import glob
 
-from ukpn import DownloadGrafanaData, automate_csv_download, get_gsp_names, set_csv_filenames
+from ukpn import (
+    open_webpage,
+    main_panel,
+    DownloadGrafanaData)
 
 logger_webdriver = logging.getLogger("selenium.webdriver.remote.remote_connection")
 logger_webdriver.setLevel(logging.WARNING)
@@ -10,53 +11,39 @@ logger_webdriver.setLevel(logging.WARNING)
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s : %(levelname)s : %(message)s ")
 logger = logging.getLogger(__name__)
 
+def test_open_webpage():
+    """Testing if the webpage has been opened successfully"""
+    grafana = open_webpage()
+    status_load = grafana.Initialise_chrome()
+    status_close = grafana.close_or_refresh(close_browser = True)
+    assert status_load and status_close == 1
 
-def test_get_gsp_names():
-    """Testing to get gsp names from the dashboard"""
-    gsp_names = get_gsp_names()
-    assert gsp_names is not None
+def test_get_all_gsp_names():
+    """Testing to retreive all GSP names"""
+    grafana = main_panel()
+    grafana.Initialise_chrome()
+    gsp_names = grafana.get_gsp_names_from_dashbaord()
+    grafana.close_or_refresh(close_browser = True)
+    for gsp in gsp_names:
+        # All the GSPS
+        assert gsp.isupper() is True
 
 
-def test_automatic_download_one_gsp_data():
+def test_non_solar_gsp():
     """Testing automatic download of single gsp
-    which has Solar data"""
-    gsp_name = "CANTERBURY NORTH"
-    data = DownloadGrafanaData(gsp_name=gsp_name)
+    which does not have Solar data"""
+    gsp_name = "LODGE ROAD"
+    data = DownloadGrafanaData(gsp_name = gsp_name)
     status = next(iter(data))
-    # If downloaded, status will be one
-    assert status == 1
+    # If false, there is no data to be downloaded
+    assert all(element == status[0] for element in status) == False
 
-
-def test_automatic_download_non_solar():
-    """Testing download of GSP which does
-    not have Solar data, but other data"""
-    gsp_name = "WARLEY"
-    data = DownloadGrafanaData(gsp_name=gsp_name)
+def test_automatic_download_solar_gsp():
+    download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data"
+    gsp_name = "SELLINDGE"
+    data = DownloadGrafanaData(
+        gsp_name = gsp_name,
+        new_directory = download_directory)
     status = next(iter(data))
-    # If not downloaded, status will be None
-    assert status is None
-
-
-def test_automatic_download_all_GSPs():
-    """Testing download of all GSP which has
-    Solar data"""
-    # Only the following GSP's has Solar data in UKPN Grafana dashboard
-    gsp_with_solar_data = [
-        "burwell",
-        "canterbury north",
-        "ninfield",
-        "northfleet east",
-        "norwich",
-        "rayleigh",
-        "richborough",
-        "sellindge",
-    ]
-
-    gsp_names = list(reversed(get_gsp_names()))
-    for gsp_name in gsp_names:
-        data = DownloadGrafanaData(gsp_name=gsp_name)
-        status = next(iter(data))
-
-        # If status is None, there is no data downloaded, meaning GSP does not have Solar data
-        if status is not None:
-            assert gsp_name.lower() in gsp_with_solar_data
+    # If True, data is present and downloaded
+    assert all(element == status[0] for element in status) == True    
