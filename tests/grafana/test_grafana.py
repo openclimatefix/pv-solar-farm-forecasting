@@ -39,9 +39,8 @@ def test_non_solar_gsp():
 
 
 def test_automatic_download_solar_gsp():
-    download_directory = "/home/vardh/ocf/pv-solar-farm-forecasting/tests/data"
     gsp_name = "SELLINDGE"
-    data = DownloadGrafanaData(gsp_name=gsp_name, new_directory=download_directory)
+    data = DownloadGrafanaData(gsp_name=gsp_name)
     status = next(iter(data))
     # If True, data is present and downloaded
     assert all(element == status[0] for element in status) == True

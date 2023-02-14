@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 from glob import glob
+from typing import Optional
 
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
@@ -26,6 +27,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
         new_directory: str = None,
         required_data: str = "Solar",
         gsp_name: str = None,
+        commence_download: Optional[bool] = False,
     ):
         """Set the download directory
 
@@ -34,11 +36,13 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             new_directory: Move files from main project folder to 'test/data'
             required_data: The data that is required to download
             gsp_name: Download for a single GSP, if None, downloads for all available GSP's
+            commence_download: Download the data
         """
         self.download_directory = download_directory
         self.new_directory = new_directory
         self.required_data = required_data
         self.gsp_name = gsp_name
+        self.commence_download = commence_download
 
     def __iter__(self):
         """Downloading the data for each gsp"""
@@ -73,13 +77,15 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             status.append(grafana.click_on_data_dialog())
             status.append(grafana.check_and_download_data())
 
-            if all(element == status[0] for element in status):
-                set_csv_filenames(
-                    download_directory=self.download_directory,
-                    new_directory=self.new_directory,
-                    gsp_name=gsp_name_lcase,
-                )
-            grafana.close_browser()
+            if self.commence_download:
+                if all(element == status[0] for element in status):
+                    set_csv_filenames(
+                        download_directory=self.download_directory,
+                        new_directory=self.new_directory,
+                        gsp_name=gsp_name_lcase,
+                    )
+            if gsp_name == gsp_names_list[-1]:
+                grafana.close_browser()
             yield status
 
 

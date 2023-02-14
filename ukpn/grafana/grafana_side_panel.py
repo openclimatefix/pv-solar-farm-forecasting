@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 class download_data(feature_panel):
     """Fucntions to download required data"""
 
-    def __init__(self, download_directory: str = None, required_data: str = "Solar") -> None:
+    def __init__(self, download_directory: str = None, required_data: str = "Solar", timeout: int = 20) -> None:
         """Download the data from the side panel of the dashboard"""
         super().__init__()
         self.download_directory = download_directory
         self.required_data = required_data
+        self.timeout = timeout
 
     def _wait_for_download_to_finish(self, timeout: int):
         """Wait for downloads to finish with a specified timeout.
@@ -114,16 +115,16 @@ class download_data(feature_panel):
                 # Clicking the download button
                 logger.info("Clicking the 'Download CSV button")
                 status = self._click_download_button()
+                logger.info("Waiting for the download to finish!")
+                self._wait_for_download_to_finish(timeout=self.timeout)                
                 return status
             else:
                 logger.debug(f"{self.gsp_name} GSP does not have {self.required_data} data")
                 return None
 
-    def close_browser(self, timeout: int = 20):
+    def close_browser(self):
         """Refresh the browser after download finish"""
-        # Refresh the driver
-        logger.info("Waiting for the download to finish!")
-        self._wait_for_download_to_finish(timeout=timeout)
+        # Close the driver
         try:
             logger.info("Closing the browser")
             self.driver.close()
