@@ -3,9 +3,7 @@ import logging
 import os
 import shutil
 from glob import glob
-from typing import Optional
 
-from selenium.common.exceptions import InvalidSessionIdException
 from torchdata.datapipes import functional_datapipe
 from torchdata.datapipes.iter import IterDataPipe
 
@@ -52,7 +50,7 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             gsp_names_list = [self.gsp_name]
 
         # Initalise chrome
-        grafana = download_data(download_directory = self.download_directory)
+        grafana = download_data(download_directory=self.download_directory)
         grafana.Initialise_chrome()
         status = []
         for gsp_name in gsp_names_list:
@@ -63,11 +61,11 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             if len(gsp_name_lcase.split()) > 1:
                 gsp_name_lcase = gsp_name_lcase.split()
                 gsp_name_lcase = seperator.join(gsp_name_lcase)
-            
+
             # Workflow
             status.append(grafana.click_on_gsp_box())
             status.append(grafana.search_for_dropdown())
-            status.append(grafana.select_a_gsp(gsp_name = self.gsp_name))
+            status.append(grafana.select_a_gsp(gsp_name=self.gsp_name))
             status.append(grafana.scroll_to_element_and_click())
             status.append(grafana.click_dataoptions_side_panel())
             status.append(grafana.click_on_data_dialog())
@@ -75,9 +73,9 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
 
             if all(element == status[0] for element in status):
                 set_csv_filenames(
-                    download_directory = self.download_directory,
-                    new_directory = self.new_directory,
-                    gsp_name = gsp_name_lcase
+                    download_directory=self.download_directory,
+                    new_directory=self.new_directory,
+                    gsp_name=gsp_name_lcase,
                 )
             grafana.close_browser()
             yield status

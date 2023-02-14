@@ -4,14 +4,15 @@ import os
 from typing import Optional
 
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import (
-    TimeoutException, 
     InvalidSessionIdException,
-    NoSuchElementException)
+    NoSuchElementException,
+    TimeoutException,
+)
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -35,6 +36,7 @@ def get_chrome():
     else:
         return None
 
+
 class open_webpage:
     """Setting up the Chrome options"""
 
@@ -42,7 +44,7 @@ class open_webpage:
         self,
         download_directory: str = None,
         url_link: str = "https://dsodashboard.ukpowernetworks.co.uk",
-        ) -> None:
+    ) -> None:
         """Function to set the desired chrome options"""
         self.download_directory = download_directory
         self.url_link = url_link
@@ -63,15 +65,15 @@ class open_webpage:
     def Initialise_chrome(self) -> None:
         """Initalise the chrome browser"""
         try:
-            logger.info("Driver is getting downloaded")            
+            logger.info("Driver is getting downloaded")
             # Download the browser
             self.driver = webdriver.Chrome(
                 service=Service(ChromeDriverManager().install()), options=self.opts
             )
 
             # Setting up a wait period of 30 seconds for browser operations
-            self.wait = WebDriverWait(self.driver, 30)            
-            
+            self.wait = WebDriverWait(self.driver, 30)
+
             # Open the link in a tab
             self.driver.get(self.url_link)
             self.driver.implicitly_wait(15)
@@ -100,10 +102,10 @@ class open_webpage:
             return None
         else:
             return 1
+
     def close_or_refresh(
-        self,
-        refresh_window: Optional[bool] = False,
-        close_browser: Optional[bool] = False):
+        self, refresh_window: Optional[bool] = False, close_browser: Optional[bool] = False
+    ):
         """Function to refresh or close the browser"""
         # Option to refresh the browser
         try:
@@ -118,4 +120,3 @@ class open_webpage:
             return None
         else:
             return 1
-             

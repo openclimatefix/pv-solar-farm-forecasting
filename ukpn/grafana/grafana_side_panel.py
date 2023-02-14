@@ -1,24 +1,24 @@
 """Functions to navigate through the side panel of the dashboard"""
-import os
 import logging
+import os
 from time import sleep
 
+from selenium.common.exceptions import InvalidSessionIdException, NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, InvalidSessionIdException
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
 
 from ukpn.grafana.grafana_feature_panel import feature_panel
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s : %(levelname)s : %(message)s ")
 logger = logging.getLogger(__name__)
 
+
 class download_data(feature_panel):
     """Fucntions to download required data"""
-    def __init__(
-        self,
-        download_directory:str = None,
-        required_data: str = "Solar") -> None:
+
+    def __init__(self, download_directory: str = None, required_data: str = "Solar") -> None:
+        """Download the data from the side panel of the dashboard"""
         super().__init__()
         self.download_directory = download_directory
         self.required_data = required_data
@@ -45,8 +45,8 @@ class download_data(feature_panel):
                 else:
                     break
             seconds += 1
-        return seconds        
-    
+        return seconds
+
     def click_on_data_dialog(self):
         """Clicking on the data dialog box"""
         try:
@@ -90,8 +90,7 @@ class download_data(feature_panel):
             logger.debug("Check if the GSP has the required data to download!")
             return None
 
-    def check_and_download_data(
-        self):
+    def check_and_download_data(self):
         """Check if the GSP has required data and download"""
         # Checking if the GSP has solar data
         logger.info(f"Checking if {self.gsp_name} GSP has {self.required_data} data")
@@ -107,8 +106,8 @@ class download_data(feature_panel):
                 # Input the required data (Solar)
                 logger.info(f"Inserting the variable '{self.required_data}'")
                 xpath = "//input[contains(@id, 'react-select')]"
-                self.element = self.driver.find_element(By.XPATH, xpath)  
-                self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))                  
+                self.element = self.driver.find_element(By.XPATH, xpath)
+                self.wait.until(EC.presence_of_element_located((By.XPATH, xpath)))
                 self.element.send_keys(f"{self.required_data}")
                 self.element.send_keys(Keys.RETURN)
 
@@ -130,4 +129,3 @@ class download_data(feature_panel):
             self.driver.close()
         except InvalidSessionIdException:
             logger.debug("Browser session expired!")
-

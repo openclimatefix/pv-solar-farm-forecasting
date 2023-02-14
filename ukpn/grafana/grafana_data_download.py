@@ -7,7 +7,6 @@ from typing import List, Optional
 from selenium import webdriver
 from selenium.common.exceptions import (
     ElementClickInterceptedException,
-    InvalidSessionIdException,
     NoSuchElementException,
     TimeoutException,
 )
@@ -346,9 +345,7 @@ class automate_csv_download:
             logger.debug("No element to click is found")
             return None
 
-    def check_and_download_data(
-        self, 
-        just_return_status: Optional[bool] = True):
+    def check_and_download_data(self, just_return_status: Optional[bool] = True):
         """Check if the GSP has required data and download"""
         self.just_return_status = just_return_status
         # Checking if the GSP has solar data

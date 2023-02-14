@@ -2,21 +2,22 @@
 import logging
 from typing import List
 
+from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import (
-    ElementClickInterceptedException,
-    NoSuchElementException)
 
 from ukpn.grafana.chrome import open_webpage
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s : %(levelname)s : %(message)s ")
 logger = logging.getLogger(__name__)
 
+
 class main_panel(open_webpage):
     """Functions to navigate through the main panel"""
+
     def __init__(self) -> None:
-        super().__init__()       
+        """Functions to configure the main panel"""
+        super().__init__()
 
     def click_on_gsp_box(self):
         """Function to click on the GSP dialog box"""
@@ -45,13 +46,13 @@ class main_panel(open_webpage):
 
         except NoSuchElementException:
             logger.debug("The drop down of gsp names has not been found!")
-            return None    
-        
-    def select_a_gsp(self, gsp_name:str):
+            return None
+
+    def select_a_gsp(self, gsp_name: str):
         """Select a GSP for the data download"""
         # Inserting the gsp name in the dashboard
         # Declaring the GSP name
-        self.gsp_name = gsp_name 
+        self.gsp_name = gsp_name
         try:
             xpath = (
                 f"//a[@class='variable-option pointer selected']//span[text()='{self.gsp_name}']"
@@ -75,7 +76,7 @@ class main_panel(open_webpage):
                 return None
             else:
                 return 1
-    
+
     def check_gsp_title_match(self):
         """Checking if the GSP name and ttile of dashboard matches"""
         try:
@@ -86,7 +87,7 @@ class main_panel(open_webpage):
             logger.debug("Please check if the page is loaded!")
         else:
             print(self.gsp_name)
-            print(self.element.text)            
+            print(self.element.text)
             if self.gsp_name in self.element.text:
                 return 1
             else:

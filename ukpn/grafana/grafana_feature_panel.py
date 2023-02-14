@@ -1,20 +1,21 @@
 """Navigate through feature (Voltage, Metered Power Generation etc.) panels of the dashboard """
 import logging
 
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import (
-    TimeoutException,
-    NoSuchElementException)
 
 from ukpn.grafana.grafana_main_panel import main_panel
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s : %(levelname)s : %(message)s ")
 logger = logging.getLogger(__name__)
 
+
 class feature_panel(main_panel):
     """Functions to navigate fature panels"""
+
     def __init__(self) -> None:
+        """Functions to configure and select features"""
         super().__init__()
 
     def scroll_to_element_and_click(
@@ -67,4 +68,4 @@ class feature_panel(main_panel):
 
         except NoSuchElementException:
             logger.debug("There is no data to be downloaded on the side panel")
-            return None            
+            return None
