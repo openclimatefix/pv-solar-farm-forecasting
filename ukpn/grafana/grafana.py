@@ -46,6 +46,8 @@ class DownloadGrafanaDataIterDataPipe(IterDataPipe):
             # Getting the list of gsp names
             gsp_names_list = get_gsp_names()
             gsp_names_list = list(reversed(gsp_names_list))
+            logger.debug(f"{gsp_names_list[-1]} GSP is not able be selected!")
+            logger.debug("The problem is with the dashboard, not the code")
         else:
             gsp_names_list = [self.gsp_name]
 
