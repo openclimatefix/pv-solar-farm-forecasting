@@ -117,6 +117,8 @@ def set_csv_filenames(download_directory: str, new_directory: str, gsp_name: str
         new_filename = os.path.join(download_directory, (gsp_name + ".csv"))
         new_location = os.path.join(new_directory, (gsp_name + ".csv"))
         # Remove the file if it already exists
+        if os.path.isfile(new_filename):
+            os.remove(new_filename)
         if os.path.isfile(new_location):
             os.remove(new_location)
         filepath = os.rename(data_file, new_filename)
