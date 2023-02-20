@@ -2,7 +2,7 @@
 
 This folder consists of web-scraping functions using [Selenium Python](https://selenium-python.readthedocs.io/) and [Webdriver-manager](https://pypi.org/project/webdriver-manager/) and `datapipes` to automate the data download and other configurations.
 
-### Usage
+### Instructions
 
 Install the necessary packages
 ```bash
@@ -31,4 +31,32 @@ Download and unzip the chrome driver.
 wget https://chromedriver.storage.googleapis.com/111.0.5563.19/chromedriver_linux64.zip
 unzip chromedriver_linux64.zip
 ```
+### Usage
 
+The `IterDataPipe` to download PVlive data for each GSP is in the `grafana.py`. To get all the GSP names provided in the `UKPN DSO dashboard`
+```python
+from ukpn import DownloadGrafanaData, main_panel, open_webpage
+
+grafana = main_panel()
+grafana.Initialise_chrome()
+gsp_names = grafana.get_gsp_names_from_dashbaord()
+grafana.close_or_refresh(close_browser=True)
+print(gsp_names)
+```
+
+To download data for individual GSP
+```python
+import os
+from ukpn import DownloadGrafanaData
+
+# GSP name should match with the names in the UKPN dashboard
+gsp_name = "SELLINDGE"
+dir_to_save_file = "~/home/..."
+DownloadGrafanaData(
+    download_directory = os.getcwd(),
+    new_directory = dir_to_save_file,
+    required_data = "Solar", # Can download different types of data Solar, Wind etc.
+    gsp_name = gsp_name ,
+    commence_download = True,
+)
+```
