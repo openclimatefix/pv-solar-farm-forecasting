@@ -7,8 +7,8 @@ from ukpn.load import OpenGSPData, check_for_negative_data, get_gsp_data_in_dict
 
 
 def test_write_netcdf():
-    folder_destination = "tests/data"
-    folder_to_save = "tests/data"
+    folder_destination = "tests/data/grafana_dashboard"
+    folder_to_save = "tests/data/grafana_dashboard"
     file_name = "ukpn_gsp.nc"
 
     # check if file exists
