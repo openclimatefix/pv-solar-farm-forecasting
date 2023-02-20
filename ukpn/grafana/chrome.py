@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_chrome():
-    """Search for the Chrome driver 'folder'"""
+    """Search for the Chrome driver folder'"""
     if os.path.isfile("/usr/bin/chromium-browser"):
         return "/usr/bin/chromium-browser"
     elif os.path.isfile("/usr/bin/chromium"):
