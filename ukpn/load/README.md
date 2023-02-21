@@ -4,6 +4,7 @@ This folder consists of utility functions and `datapipes` that configure a given
 
 ### Usage
 
+* Power data
 Some of the pre-processing steps in the `datapipeline` consist of are as follows:
 
 1. Checking for the negative data
@@ -63,4 +64,16 @@ else:
     )
 
 print(data)
+```
+
+* Meta data
+Gives the center coordinate for all the GSP files into a dictionary
+```python
+# Import necessary packages
+from ukpn.load import GetCenterCoordinatesGSP
+
+# Path of the GSP files
+folder_destimation = "~/home/.../*.csv"
+data_dict = GetCenterCoordinatesGSP(folder_destination=folder_destination)
+print(data_dict)
 ```
