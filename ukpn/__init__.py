@@ -1,4 +1,5 @@
 """Datapipes"""
+import ukpn.load
 from ukpn.grafana.chrome import open_webpage
 from ukpn.grafana.grafana import DownloadGrafanaDataIterDataPipe as DownloadGrafanaData
 from ukpn.grafana.grafana import get_gsp_names, set_csv_filenames
