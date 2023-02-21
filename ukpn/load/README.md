@@ -59,7 +59,7 @@ else:
         freq: str = "10Min",
         folder_to_save = folder_destination,
         file_name = file_name,
-        write_as_netcdf = True      
+        write_as_netcdf = True
     )
 
 print(data)
