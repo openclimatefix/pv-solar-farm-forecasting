@@ -3,11 +3,11 @@ from pathlib import Path
 
 import xarray as xr
 
-from ukpn.load import OpenGSPData, check_for_negative_data, get_gsp_data_in_dict
+from ukpn.load import check_for_negative_data, get_gsp_data_in_dict
 
 
 def test_write_netcdf():
-    folder_destination = "tests/data/grafana_dashboard"
+    folder_destination = "tests/data"
     file_name = "ukpn_gsp.nc"
 
     # check if file exists
@@ -17,9 +17,9 @@ def test_write_netcdf():
     if check_file:
         xr_data = xr.open_dataset(file_path, engine="h5netcdf")
 
-    data_coords = list(xr_data.coords)
+        data_coords = list(xr_data.coords)
 
-    assert len(data_coords) == 2
+        assert len(data_coords) == 2
 
 
 def test_check_non_negative_valus():
