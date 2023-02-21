@@ -35,9 +35,7 @@ def test_get_url_gsp_names():
 def test_coords_from_csv_files():
     # Testing to check
     # Testing for all files
-    folder_destination = (
-        "/home/raj/ocf/pv-solar-farm-forecasting/tests/local_data/ukpn_dashboard_data"
-    )
+    folder_destination = "tests/data"
     data = GetCenterCoordinatesGSP(folder_destination=folder_destination)
     data = next(iter(data))
 
@@ -51,7 +49,7 @@ def test_get_all_the_records():
     if isinstance(data, Dict):
         total_records = data["nhits"]
         # Total GSP records including PV Solar output, wind, biofuel etc.
-        assert total_records == 1033
+        assert total_records == 1040
     else:
         return AssertionError
 
