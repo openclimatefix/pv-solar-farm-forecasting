@@ -35,9 +35,7 @@ def test_get_url_gsp_names():
 def test_coords_from_csv_files():
     # Testing to check
     # Testing for all files
-    folder_destination = (
-        "/home/raj/ocf/pv-solar-farm-forecasting/tests/data/grafana_dashboard"
-    )
+    folder_destination = "tests/data"
     data = GetCenterCoordinatesGSP(folder_destination=folder_destination)
     data = next(iter(data))
 
@@ -51,9 +49,6 @@ def test_get_all_the_records():
     if isinstance(data, Dict):
         total_records = data["nhits"]
         # Total GSP records including PV Solar output, wind, biofuel etc.
-        # Total number of records changes as the new data is addded
-        # To manualluy check the total records- 
-        # https://ukpowernetworks.opendatasoft.com/explore/dataset/embedded-capacity-register/api/?disjunctive.licence_area&rows=
         assert total_records == 1040
     else:
         return AssertionError
